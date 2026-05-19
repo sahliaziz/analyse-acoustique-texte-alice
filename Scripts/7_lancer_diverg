@@ -1,0 +1,26 @@
+#!/bin/bash
+#this script is part of Timothy Pommée's PhD thesis (2021)
+
+SOURCE=${BASH_SOURCE[0]}
+while [ -h $SOURCE ]; do # On cherche à résoudre $SOURCE jusqu'à que cette variable ne soit pas un lien symbolique
+	DIR=$(cd -P $(dirname $SOURCE) && pwd)
+	SOURCE=$(readlink $SOURCE)
+	[[ $SOURCE != /* ]] && SOURCE=$DIR/$SOURCE # if $SOURCE était un lien symbolique relatif, nous devons le modifier pour obtenir un chemin absolu
+done
+
+dossierscript=$(cd -P $(dirname $SOURCE) && pwd)
+dossier=$(cd -P $(dirname $dossierscript)/2_wav_traites && pwd)
+dossierArrivee=$(dirname $dossier)/5_consonnes/txt
+dossierTxtGr=$(dirname $dossier)/3_alignement_force
+dossierWav=$(dirname $dossier)/5_consonnes/wav
+for f in $(ls $dossier/*.wav); do
+	fileName=$(basename $f)
+	fileName="${fileName%.*}"
+	length=$(wc -l <$dossierTxtGr/${fileName}.TextGrid)
+	maxlen=5000
+	echo "$dossierArrivee/${fileName}_diverg.txt"
+	if (($length >= $maxlen)); then
+		python2 $dossierscript/diverg.py -v -i "$f" -b "$dossierArrivee/${fileName}_diverg.txt"
+		cp $dossier/${fileName}.wav $dossierWav
+	fi
+done
