@@ -70,7 +70,7 @@ done
 rm *.log 2>/dev/null
 touch "$FILELOG"
 
-log "DOSSIER DE DEPART" "$(cd -P "$DIR1" && pwd)" "DOSSIER ARRIVEE" "$(cd -P "$DIR2" && pwd)" "========="
+# echo "DOSSIER DE DEPART" "$(cd -P "$DIR1" && pwd)" "DOSSIER ARRIVEE" "$(cd -P "$DIR2" && pwd)" "========="
 
 # TODO install dep ffmpeg
 
@@ -85,11 +85,6 @@ echo "Placez vos enregistrements de sujet féminin au format WAV dans le dossier
 echo "Placez les alignements correspondants aux audios dans le dossier \"Paty_alignment\""
 read -p "Appuyer sur ENTREE pour continuer"
 
-# TODO remove test
-#cp *.wav "$DIR1"
-#cp ../assets/segmented_records/Texte1/Gautier*M.wav 1_wav_originaux/FR/Hommes/
-cp ../assets/segmented_records/Texte1/Aimee*F.wav 1_wav_originaux/FR/Femmes/
-cp -r ../assets/Paty_alignment/Aimee_1* Paty_alignment/
 
 echo "Les enregistrements correspondent-ils à une lecture du texte entier ?"
 select inputChoice in "Oui" "Non"; do
@@ -116,8 +111,6 @@ done
 # 2.
 # Creer un fichier TXT correspondant au fichier WAV
 ######################################################################
-DIR2='2_wav_traites'
-DIR3='3_alignement_force'
 for FILE in "$DIR2"/*.wav; do
     FILENAME=$(basename "$FILE" .wav)
     FILETXT="$DIR2/$FILENAME.txt"
@@ -133,7 +126,7 @@ for FILE in "$DIR2"/*.wav; do
 
     echo "Alignement forcé du fichier audio $FILE par BAS WebServices"
     curl -v -H 'content-type: multipart/form-data' -F SIGNAL=@"$FILE" LANGUAGE=fra-FR -F OUTFORMAT=TextGrid -F TEXT=@"$FILETXT" 'https://clarin.phonetik.uni-muenchen.de/BASWebServices/services/runMAUSBasic' 2>>"$FILELOG" >"$TEMPXML"
-    log $(cat "$TEMPXML")
+    echo $(cat "$TEMPXML") >> "$FILELOG"
 
     SUCCESS=$(sed -nre 's:^.*<success>(.*)</success>.*$:\1:p' "$TEMPXML")
     if [ "$SUCCESS" '=' 'true' ]; then
@@ -180,12 +173,9 @@ for FILE in "$DIR2"/*.wav; do
     #echo "FILESRC = $DIR5/wav/${FILENAME}.wav"
     cp "$FILE" "$FILESRC"
     echo "Création de $FILEDIVERG"
-    log "Traitement de $FILEDIVERG"
+    echo "Traitement de $FILEDIVERG" >> "$FILELOG"
     if [ "$FILELENGTH" -ge "$MAXLEN" ]; then
         uv run 'Scripts/diverg.py' -i "$FILESRC" -b "$FILEDIVERG" -v >>"$FILELOG"
-        #        source venv/bin/activate 'Scripts/diverg.py' -i "$FILESRC" -b "$FILEDIVERG" -v >>"$FILELOG"
-        # sox "$FILE" "$FILESRC"
-        # ./Scripts/DFB/diverg --order 16 -f "$FILESRC" -o "$FILEDIVERG" -v
     fi
 done
 

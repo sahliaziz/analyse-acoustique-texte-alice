@@ -40,9 +40,9 @@ if VERBOSE:
 
     from numpy import abs, array, log, nan, zeros
     from numpy.fft import fft
-    from pylab import show, subplots
+    from matplotlib.pyplot import show, subplots
 
-# TODO change to 16
+
 order = 16
 inputPath = None
 outputPath = "out.lab"
@@ -116,7 +116,7 @@ class ModelLongTerm(object):
         self.variance_b[0] = self.variance_f[0]
         ik = min([self.ordre, self.length - 1])
 
-        for n in xrange(ik + 1):
+        for n in range(ik + 1):
             oubli = 1.0 / float(self.length - n)
 
             self.cor[n] = self.cor[n] + oubli * (
@@ -195,8 +195,8 @@ class ModelCourtTrerm(object):
         self.AI = [0] * (self.ordre + 2)
         self.dernier_echantillon = 0
         self.buff = buff
-        for tau in xrange(self.ordre + 1):
-            for i in xrange(self.N - tau):
+        for tau in range(self.ordre + 1):
+            for i in range(self.N - tau):
                 self.coef_autocorr[tau] = (
                     self.coef_autocorr[tau] + buff[i] * buff[i + tau - 1]
                 )
@@ -221,14 +221,14 @@ class ModelCourtTrerm(object):
             while i_ordre < self.ordre and self.variance_erreur_residuelle > 0:
                 if self.variance_erreur_residuelle > 0:
                     S = 0
-                    for i in xrange(i_ordre):
+                    for i in range(i_ordre):
                         S = S + self.AI[i] * self.coef_autocorr[i_ordre - i + 1]
 
                     # coef reflexion
                     coef_reflexion[i_ordre] = -S / self.variance_erreur_residuelle
 
-                    MH = i_ordre / 2 + 1
-                    for i in xrange(1, MH):
+                    MH = i_ordre // 2 + 1
+                    for i in range(1, MH):
                         IB = i_ordre - i + 2
                         tmp = self.AI[i] + coef_reflexion[i_ordre] * self.AI[IB]
                         self.AI[IB] = self.AI[IB] + coef_reflexion[i_ordre] * self.AI[i]
@@ -253,7 +253,7 @@ class ModelCourtTrerm(object):
     def miseAJour(self, echantillon):
         self.dernier_echantillon = self.buff.popleft()
         self.buff.append(echantillon)
-        for tau in xrange(1, self.ordre + 1):
+        for tau in range(1, self.ordre + 1):
             self.coef_autocorr[tau] = (
                 self.coef_autocorr[tau]
                 - self.dernier_echantillon * self.buff[tau - 1]
@@ -293,20 +293,25 @@ def calculDistance(modeleLong, modeleCourt):
     """
 
     if modeleCourt.variance_erreur_residuelle == 0:
-        # epsilon pour le type de donnés correspondant à modeleLong.variance_erreur_residuelle
-        numerateur = spacing(modeleCourt.variance_erreur_residuelle)
+        print(
+            "Variance du modèle court terme nulle, utilisation de la plus petite valeur possible"
+        )
+        numerateur = 1e-9
     else:
         numerateur = modeleCourt.variance_erreur_residuelle
 
-    QV = numerateur / modeleLong.variance_erreur_residuelle
+    if modeleLong.variance_erreur_residuelle == 0:
+        print(
+            "Variance du modèle long terme nulle, utilisation de la plus petite valeur possible"
+        )
+        denominateur = 1e-9
+    else:
+        denominateur = modeleLong.variance_erreur_residuelle
+
+    QV = numerateur / denominateur
     return (
-        2
-        * modeleCourt.erreur_residuelle
-        * modeleLong.erreur_residuelle
-        / modeleLong.variance_erreur_residuelle
-        - (1.0 + QV)
-        * modeleLong.erreur_residuelle**2
-        / modeleLong.variance_erreur_residuelle
+        2 * modeleCourt.erreur_residuelle * modeleLong.erreur_residuelle / denominateur
+        - (1.0 + QV) * modeleLong.erreur_residuelle**2 / denominateur
         + QV
         - 1.0
     ) / (2.0 * QV)

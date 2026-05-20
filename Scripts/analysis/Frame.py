@@ -5,7 +5,6 @@ Date: 2022
 """
 
 
-
 class Frame(object):
     """Represents a "frame" of audio data."""
 

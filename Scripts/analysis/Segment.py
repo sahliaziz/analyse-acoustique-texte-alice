@@ -16,4 +16,13 @@ class Segment:
         self.type = type
 
     def __str__(self):
-        return str(self.type) + " : " + str(self.start) + " -> " + str(self.end) + " [" + str(self.duration) + "]"
+        return (
+            str(self.type)
+            + " : "
+            + str(self.start)
+            + " -> "
+            + str(self.end)
+            + " ["
+            + str(self.duration)
+            + "]"
+        )
