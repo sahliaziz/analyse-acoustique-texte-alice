@@ -1,0 +1,2 @@
+Name	Speaker	N	Area2	Area1	i.dist	u.dist	a.dist	VTL	Duration	Intensity	Slope	Formant
+JP_1	M	271	89.6	48.3	109.6	85.7	89.6	-1.00	81	58.7	-26.6	Robust
