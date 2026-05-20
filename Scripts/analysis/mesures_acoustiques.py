@@ -13,13 +13,12 @@ import Frame
 import librosa
 import numpy as np
 import pandas as pd
-import webrtcvad
 from Segment import Segment
 from SegmentType import SegmentType
+from silero_vad import get_speech_timestamps, load_silero_vad
 
 # Global variables
 frame_duration = 10  # ms
-aggressiveness = 2
 
 start = time.perf_counter()
 
@@ -66,50 +65,40 @@ def read_wave(path):
         raise
 
 
-def make_segments(aggressiveness, frames, sample_rate):
-    """Makes simple segments using silence or voice frames.
+def make_segments(audio_tensor, sample_rate):
+    model = load_silero_vad()
 
-    Takes the vad object, the audio frames, the sample rate of the audio record and returns list of tuples each
-    containing start and end timecodes of the segment.
-    """
-    voice_trigger = False
-    silence_trigger = False
+    speech_timestamps = get_speech_timestamps(
+        audio_tensor, model, sampling_rate=sample_rate
+    )
+
     segments = []
 
-    vad = webrtcvad.Vad(aggressiveness)
+    prev_end = 0.0
 
-    # iterating frames, create voice or silence segment
-    for frame in frames:
-        # frame is silence type
-        if vad.is_speech(frame.data, sample_rate) is False:
-            # voice segment being created
-            if voice_trigger is True:
-                segments[-1].end = frame.timestamp
-                segments[-1].duration = frame.timestamp - segments[-1].start
-                voice_trigger = False
+    for ts in speech_timestamps:
+        start = ts["start"] / sample_rate
+        end = ts["end"] / sample_rate
 
-            # no silence segment being created
-            if silence_trigger is False:
-                segments.append(Segment(frame.timestamp, -1, -1, SegmentType.SILENCE))
-                silence_trigger = True
+        # SILENCE before speech
+        if start > prev_end:
+            segments.append(
+                Segment(prev_end, start, start - prev_end, SegmentType.SILENCE)
+            )
 
-        # frame is voice type
-        else:
-            # silence segment being created
-            if silence_trigger is True:
-                segments[-1].end = frame.timestamp
-                segments[-1].duration = frame.timestamp - segments[-1].start
-                silence_trigger = False
+        # VOICE segment
+        segments.append(Segment(start, end, end - start, SegmentType.VOICE))
 
-            # no voice segment being created
-            if voice_trigger is False:
-                segments.append(Segment(frame.timestamp, -1, -1, SegmentType.VOICE))
-                voice_trigger = True
-    else:
-        # case of the last segment if it is not finished
-        if voice_trigger is True or silence_trigger is True:
-            segments[-1].end = frames[-1].timestamp
-            segments[-1].duration = segments[-1].end - segments[-1].start
+        prev_end = end
+
+    # trailing silence
+    total_duration = len(audio_tensor) / sample_rate
+    if prev_end < total_duration:
+        segments.append(
+            Segment(
+                prev_end, total_duration, total_duration - prev_end, SegmentType.SILENCE
+            )
+        )
 
     return segments
 
@@ -153,10 +142,9 @@ def segments_list(path):
 
     Takes the path, and returns a list of segments.
     """
-    audio, sample_rate, duration = read_wave(path)  # sample rate should be 16000
-    frames = frame_generator(frame_duration, audio, sample_rate)
-    frames = list(frames)
-    segments = make_segments(aggressiveness, frames, sample_rate)
+    pcm_data, sample_rate, duration = read_wave(path)  # sample rate should be 16000
+    audio = np.frombuffer(pcm_data, dtype=np.int16).astype(np.float32) / 32768.0
+    segments = make_segments(audio, sample_rate)
     return segments
 
 
@@ -173,18 +161,10 @@ def voice_length(path, option):
                 vla += seg.duration
         return vla
     elif option == "speech":
-        vls = librosa.get_duration(filename=path)
-        number_seg = 0
-        first_sil = len(segments)
-
-        for seg in segments:
-            if seg.type == SegmentType.SILENCE:
-                if number_seg < first_sil:
-                    first_sil = number_seg
-                last_sil = number_seg
-            number_seg += 1
-        vls = vls - segments[last_sil].duration - segments[first_sil].duration
-        return vls
+        voice_segments = [seg for seg in segments if seg.type == SegmentType.VOICE]
+        if not voice_segments:
+            return 0
+        return voice_segments[-1].end - voice_segments[0].start
 
 
 def speech_rate(directory):
@@ -257,12 +237,12 @@ def vocal_quality_analysis(path):
     df = pd.read_csv(path, header=None, sep=";")
     for i in range(len(df.axes[0])):
         temporary_tab = []
-        temporary_tab.append(df.iloc[i][0][:-9])
-        temporary_tab.append(df.iloc[i][0][-6])
-        temporary_tab.append(df.iloc[i][0][-8])
-        temporary_tab.append(df.iloc[i][1])
-        temporary_tab.append(df.iloc[i][2])
-        temporary_tab.append(df.iloc[i][3])
+        temporary_tab.append(df.iloc[i, 0][:-9])
+        temporary_tab.append(df.iloc[i, 0][-6])
+        temporary_tab.append(df.iloc[i, 0][-8])
+        temporary_tab.append(df.iloc[i, 1])
+        temporary_tab.append(df.iloc[i, 2])
+        temporary_tab.append(df.iloc[i, 3])
         tab.append(temporary_tab)
     return tab
 
@@ -276,7 +256,7 @@ def vowel_analysis(path):
     df = pd.read_csv(path, header=0, index_col=0, sep="\t")
     df = df.reindex(sorted(df.index), axis=0)
     for i in range(len(df.axes[0])):
-        tab.append([df.iloc[i][2]])
+        tab.append([df.iloc[i, 2]])
     return tab
 
 
@@ -296,6 +276,8 @@ def pitch_mean(directory):
             if list_f0[i][1] != -1:
                 sublist.append(list_f0[i][1])
         tab.append([np.mean(sublist)])
+    if not tab:
+        raise FileNotFoundError(f"No pitch files found in {directory}")
     return tab
 
 
@@ -315,22 +297,27 @@ def pitch_std(directory):
             if list_f0[i][1] != -1:
                 sublist.append(list_f0[i][1])
         tab.append([np.std(sublist)])
+    if not tab:
+        raise FileNotFoundError(f"No pitch files found in {directory}")
     return tab
 
 
-# The following lines concatene all measures in a single .csv for analsis
+def main():
+    # The following lines concatenate all measures in a single .csv for analysis.
+    tab = np.array(vocal_quality_analysis(path_vocal_quality))
+    tab = np.concatenate((tab, np.array(vowel_analysis(path_vowel))), axis=1)
+    tab = np.concatenate((tab, np.array(pitch_mean(directory_f0))), axis=1)
+    tab = np.concatenate((tab, np.array(pitch_std(directory_f0))), axis=1)
+    tab = np.concatenate((tab, np.array(speech_rate(speech_directory))), axis=1)
+    tab = np.concatenate((tab, np.array(articulation_rate(speech_directory))), axis=1)
+    tab = np.concatenate((tab, np.array(mean_silence_directory(speech_directory))), axis=1)
+    tab_formalized = tab.tolist()
+    tab_to_csv.extend(tab_formalized)
+    df_export = pd.DataFrame(tab_to_csv)
+    df_export.to_csv("./Analyzed_results/mesures_acoustiques.csv", header=None, index=None)
+
+    print("Time elapsed during mesures_acoustiques.py = ", time.perf_counter() - start)
 
 
-tab = np.array(vocal_quality_analysis(path_vocal_quality))
-tab = np.concatenate((tab, np.array(vowel_analysis(path_vowel))), axis=1)
-tab = np.concatenate((tab, np.array(pitch_mean(directory_f0))), axis=1)
-tab = np.concatenate((tab, np.array(pitch_std(directory_f0))), axis=1)
-tab = np.concatenate((tab, np.array(speech_rate(speech_directory))), axis=1)
-tab = np.concatenate((tab, np.array(articulation_rate(speech_directory))), axis=1)
-tab = np.concatenate((tab, np.array(mean_silence_directory(speech_directory))), axis=1)
-tab_formalized = tab.tolist()
-tab_to_csv.extend(tab_formalized)
-df_export = pd.DataFrame(tab_to_csv)
-df_export.to_csv("./Analyzed_results/mesures_acoustiques.csv", header=None, index=None)
-
-print("Time elapsed during mesures_acoustiques.py = ", time.perf_counter() - start)
+if __name__ == "__main__":
+    main()
