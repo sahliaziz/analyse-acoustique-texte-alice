@@ -13,6 +13,8 @@ dependencies = [
     "numpy>=1.26,<2",
     "praat-parselmouth>=0.4.7",
     "matplotlib>=3.10.9",
+    "pydub>=0.25.1",
+    "tgt>=1.5",
 ]
 
 [dependency-groups]
