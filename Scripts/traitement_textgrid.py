@@ -60,7 +60,3 @@ def extract_consonants(df : pd.DataFrame) -> pd.DataFrame:
         return consonants_df
     else:
         raise ValueError(f"DataFrame must have at least 660 rows, but has {len(df)}")
-
-df = tier_to_df('/home/ash/Documents/Stage/analyse_acoustique_texte_Alice_v2/src/3_alignement_force/JP_2.TextGrid', 2)
-consonants_df = extract_consonants(df)
-consonants_df.to_csv('/home/ash/Documents/Stage/analyse_acoustique_texte_Alice_v2/src/5_consonnes/txt/JP_2.csv', index=False)
