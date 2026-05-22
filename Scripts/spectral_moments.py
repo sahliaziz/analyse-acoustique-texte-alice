@@ -28,8 +28,6 @@ import math
 import pandas as pd
 
 
-# print first line of Praat result file (headers)
-
 resDir = "../../result/"
 wavDir = "/home/ash/Documents/Stage/analyse_acoustique_texte_Alice_v2"
 ID = "JP_2"
@@ -3180,66 +3178,6 @@ def extract_moments(fa_df: pd.DataFrame, diverg_df: pd.DataFrame, resFile, sound
                         - frame_size_fric / 2
                     )
             i = i + 1
-
-    print(
-        "\nmom_win_p1 =",
-        mom_win_p1,
-        "\nmom_win_p2 =",
-        mom_win_p2,
-        "\nmom_win_p3 =",
-        mom_win_p3,
-        "\nmom_win_p4 =",
-        mom_win_p4,
-        "\nmom_win_p5 =",
-        mom_win_p5,
-        "\nmom_win_p6 =",
-        mom_win_p6,
-        "\nmom_win_p7 =",
-        mom_win_p7,
-        "\nmom_win_p8 =",
-        mom_win_p8,
-        "\nmom_win_p9 =",
-        mom_win_p9,
-        "\nmom_win_t1 =",
-        mom_win_t1,
-        "\nmom_win_t2 =",
-        mom_win_t2,
-        "\nmom_win_t3 =",
-        mom_win_t3,
-        "\nmom_win_t4 =",
-        mom_win_t4,
-        "\nmom_win_k1 =",
-        mom_win_k1,
-        "\nmom_win_k2 =",
-        mom_win_k2,
-        "\nmom_win_k3 =",
-        mom_win_k3,
-        "\nmom_win_k4 =",
-        mom_win_k4,
-        "\nmom_win_b =",
-        mom_win_b,
-        "\nmom_win_d =",
-        mom_win_d,
-        "\nmom_win_g1 =",
-        mom_win_g1,
-        "\nmom_win_g2 =",
-        mom_win_g2,
-        "\nmom_win_f =",
-        mom_win_f,
-        "\nmom_win_s =",
-        mom_win_s,
-        "\nmom_win_ch =",
-        mom_win_ch,
-        "\nmom_win_v1 =",
-        mom_win_v1,
-        "\nmom_win_v2 =",
-        mom_win_v2,
-        "\nmom_win_z =",
-        mom_win_z,
-        "\nmom_win_j =",
-        mom_win_j,
-        "\n",
-    )
 
     # transform to strings for Praat input
     mom_win_p1p = str(mom_win_p1)
