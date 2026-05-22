@@ -111,7 +111,7 @@ for interval from 1 to numberOfIntervals
 endfor
 
 selectObject: formantsTable
-Save as tab-separated file: outputfile$
+Save as comma-separated file: outputfile$
 
 selectObject: formantsTable
 plusObject: sound
