@@ -57,7 +57,7 @@ def extract_consonants(df : pd.DataFrame) -> pd.DataFrame:
                     new_row = pd.DataFrame(
                         {"tmin": [tmin], "text": [text], "tmax": [tmax]}
                     )
-                    consonants_df = pd.concat([consonants_df, new_row], ignore_index=True) # type: ignore
+                    consonants_df = pd.concat([consonants_df, new_row], ignore_index=True)
         return consonants_df
     else:
         raise ValueError(f"DataFrame must have at least 660 rows, but has {len(df)}")
