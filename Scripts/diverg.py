@@ -176,7 +176,7 @@ class ModelCourtTrerm(object):
     Model court terme, glissant de longueur fixe 'Lmin'. en utilisant la
     méthode des treillis.
     """
-    
+
     def __init__(self, ordre, buff):
         """
 
@@ -341,6 +341,8 @@ def segment(
     Lmin = int(Lmin * fe)
     # Trace de calcul
     trace = []
+    dynaWn = []
+    tWn = []
     while t < long_signal - 1:
         # Nouvelle Rupture
 
@@ -358,10 +360,6 @@ def segment(
         # Initialisation du modèle long terme
         echantillon = data[t]
         longTerme = ModelLongTerm(ordre, echantillon)
-
-        if withTrace:
-            dynaWn = []
-            tWn = []
 
         while (not rupture) and t < long_signal - 1:
             t += 1
