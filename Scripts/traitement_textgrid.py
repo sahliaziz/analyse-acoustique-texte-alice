@@ -1,8 +1,9 @@
-import tgt
+from pathlib import Path
 import pandas as pd
+import tgt
 
 
-def tier_to_df(textgrid_path : str, tier_index : int) -> pd.DataFrame:
+def tier_to_df(textgrid_path : Path, tier_index : int) -> pd.DataFrame:
     tg = tgt.io.read_textgrid(textgrid_path)
 
     tier = tg.tiers[tier_index]
