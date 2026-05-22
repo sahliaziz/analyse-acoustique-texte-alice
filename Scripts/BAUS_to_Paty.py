@@ -51,3 +51,35 @@ if len(os.listdir(Paty_folder)) != 0:
             BAUS_file_write.close()
 
     print("Time elapsed during BAUS_to_Paty.py :", time.perf_counter() - start)
+
+
+def to_paty(textgrid):
+    conversion_table = {
+        '"B"': '"b"',
+        '"D"': '"d"',
+        '"F"': '"f"',
+        '"G"': '"g"',
+        '"J"': '"j"',
+        '"K"': '"k"',
+        '"L"': '"l"',
+        '"M"': '"m"',
+        '"N"': '"n"',
+        '"P"': '"p"',
+        '"S"': '"s"',
+        '"T"': '"t"',
+        '"V"': '"v"',
+        '"W"': '"w"',
+        '"Z"': '"z"',
+        '"segmentation"': '"MAU"',
+        '"<eps>"': '"<p:>"',
+        '"AE"': '"@"',
+        '"A~"': '"a~"',
+        '"E~"': '"9~"',
+        '"NJ"': '"nj"',
+        '"SH"': '"S"',
+        '"ZH"': '"Z"'
+    }
+
+    for key, value in conversion_table.items():
+        textgrid = textgrid.replace(key, value)
+    textgrid = textgrid.partition("item [1]")[2]
