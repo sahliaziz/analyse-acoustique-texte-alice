@@ -1,7 +1,6 @@
 # coding: utf-8
 
 """
-
 This script has been adapted from :
 Segmentation Forward/Backward; IRIT- 2013 - Maxime Le Coz
 by Timothy Pommée and Régine Andre-Obrect (IRIT - 2021)
@@ -11,8 +10,6 @@ Temps de calcul indicatifs :
 25 minutes  - Ordre 2 : 11759 Frontieres (2435.2275 sec)
 12 secondes - Ordre 2 :   274 Frontieres   (19.0561 sec)
 5  secondes - Ordre 2 :   141 Frontieres    (7.2487 sec)
-
-
 """
 
 from collections import deque
@@ -179,7 +176,7 @@ class ModelCourtTrerm(object):
     Model court terme, glissant de longueur fixe 'Lmin'. en utilisant la
     méthode des treillis.
     """
-
+    
     def __init__(self, ordre, buff):
         """
 
@@ -293,20 +290,11 @@ def calculDistance(modeleLong, modeleCourt):
     """
 
     if modeleCourt.variance_erreur_residuelle == 0:
-        print(
-            "Variance du modèle court terme nulle, utilisation de la plus petite valeur possible"
-        )
         numerateur = 1e-9
     else:
         numerateur = modeleCourt.variance_erreur_residuelle
 
-    if modeleLong.variance_erreur_residuelle == 0:
-        print(
-            "Variance du modèle long terme nulle, utilisation de la plus petite valeur possible"
-        )
-        denominateur = 1e-9
-    else:
-        denominateur = modeleLong.variance_erreur_residuelle
+    denominateur = modeleLong.variance_erreur_residuelle
 
     QV = numerateur / denominateur
     return (
