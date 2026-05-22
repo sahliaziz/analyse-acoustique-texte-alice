@@ -142,7 +142,6 @@ done
 
 # TODO install praat
 
-echo "using $(python --version)"
 uv run 'Scripts/BAUS_to_Paty.py'
 praat --run 'Scripts/4_textgrid_to_table.praat' $(cd -P "$DIR3" && pwd)
 
@@ -224,7 +223,6 @@ praat --run 'Scripts/10_VowelTriangle.praat' $(cd -P "$DIR6" && echo $(pwd)/$INP
 echo 'Mesures de F2 des semi-consonnes'
 # The next part is made to avoid Praat's limitations of loaded files per instance
 mkdir "./semivowel_environment/"
-rm -r "./semivowel_environment/"*
 
 for file in ./2_wav_traites/*.wav; do
     filename=${file:16}

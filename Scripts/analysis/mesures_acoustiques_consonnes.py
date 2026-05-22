@@ -31,10 +31,8 @@ for i in range(1, len(df.axes[0])):
         temporary_tab.append(df.iloc[i][4])
         temporary_tab.append(df.iloc[i][5])
         tab_to_csv.append(temporary_tab[:])
-df_export = pd.DataFrame(tab_to_csv)
-df_export.to_csv(
-    "./Analyzed_results/mesures_acoustiques_consonnes.csv", header=None, index=None
-)
+        df_export = pd.DataFrame(tab_to_csv)
+        df_export.to_csv("./Analyzed_results/mesures_acoustiques_consonnes.csv", header=False, index=False)
 
 print(
     "Time elapsed during mesures_acoustiques_consonnes.py =",

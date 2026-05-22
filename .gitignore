@@ -9,4 +9,17 @@ wheels/
 # Virtual environments
 .venv
 
+# Other
+.ruff_cache/
 *.log
+1_wav_originaux/
+2_wav_traites/
+3_alignement_force/
+4_qualite_vocale/
+5_consonnes/
+6_voyelles/
+7_semi_consonnes/
+8_Segments/
+Analyzed_results/
+Paty_alignment/
+Pitch_F0/
