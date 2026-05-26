@@ -4,37 +4,14 @@ Team: SAMoVA
 Date: 2022
 """
 
-import os
 from pathlib import Path
 import re
 from pydub import AudioSegment
 import parselmouth
-
 import numpy as np
 import pandas as pd
 from segment import Segment, SegmentType
 from silero_vad import get_speech_timestamps, load_silero_vad
-
-
-path_vocal_quality = "./4_qualite_vocale/Measures_sent1.txt"
-path_vowel = "./6_voyelles/voweltriangle_praat.txt"
-speech_directory = "./2_wav_traites"
-tab_to_csv = [
-    [
-        "sujet",
-        "genre",
-        "repetition",
-        "cpps",
-        "slope",
-        "tilt",
-        "aire triangle s_2",
-        "mean F0",
-        "std F0",
-        "speech rate",
-        "articulation rate",
-        "mean silence duration",
-    ]
-]
 
 
 def read_wav(path : Path | str) -> tuple[bytes, int, float]:
@@ -181,9 +158,7 @@ def vocal_quality_analysis(path: Path | str) -> pd.DataFrame:
     df = pd.read_csv(path, header=None, sep=";")
 
     return pd.DataFrame({
-        "sujet":      df.iloc[:, 0].str[:-9],
-        "genre":      df.iloc[:, 0].str[-6],
-        "repetition": df.iloc[:, 0].str[-8],
+        "fichier":    df.iloc[:, 0],
         "cpps":       df.iloc[:, 1],
         "slope":      df.iloc[:, 2],
         "tilt":       df.iloc[:, 3],
@@ -200,7 +175,7 @@ def vowel_analysis(path: Path | str) -> pd.DataFrame:
 
 
 def measure_pitch(audio_file: Path) -> pd.DataFrame:
-    snd = parselmouth.Sound(audio_file)
+    snd = parselmouth.Sound(str(audio_file))
     pitch = snd.to_pitch(time_step=0.005, pitch_floor=50.0, pitch_ceiling=400.0)
 
     df = pd.DataFrame({
@@ -220,21 +195,22 @@ def pitch_std(f0_df : pd.DataFrame) -> float:
     return f0_list[f0_list > 0.0].std()
 
 
-def main():
-    # The following lines concatenate all measures in a single .csv for analysis.
-    # tab = np.array(vocal_quality_analysis(path_vocal_quality))
-    # tab = np.concatenate((tab, np.array(vowel_analysis(path_vowel))), axis=1)
-    # tab = np.concatenate((tab, np.array(pitch_mean(directory_f0))), axis=1)
-    # tab = np.concatenate((tab, np.array(pitch_std(directory_f0))), axis=1)
-    # tab = np.concatenate((tab, np.array(speech_rate(speech_directory))), axis=1)
-    # tab = np.concatenate((tab, np.array(articulation_rate(speech_directory))), axis=1)
-    # tab = np.concatenate((tab, np.array(mean_silence_file(speech_directory))), axis=1)
-    # tab_formalized = tab.tolist()
-    # tab_to_csv.extend(tab_formalized)
-    # df_export = pd.DataFrame(tab_to_csv)
+def mesures_acoustiques(
+        qualite_vocale: Path, voweltriangle_path: Path, f0_df: pd.DataFrame, tg_content: str, audio_file: Path
+    ) -> pd.DataFrame:
+    """Combines all acoustic measures into a single dataframe.
+    Takes paths to vocal quality and vowel triangle CSVs, a pitch dataframe, 
+    a TextGrid string, and an audio file path, and returns a dataframe with all measures.
+    """
+    df_vq = vocal_quality_analysis(qualite_vocale)
+    df_vt = vowel_analysis(voweltriangle_path)
 
+    df = df_vq.copy()
+    df["aire triangle s_2"] = df_vt["Area2"].values
+    df["mean F0"] = pitch_mean(f0_df)
+    df["std F0"] = pitch_std(f0_df)
+    df["speech rate"] = speech_rate(audio_file, tg_content)
+    df["articulation rate"] = articulation_rate(audio_file, tg_content)
+    df["mean silence duration"] = mean_silence_file(audio_file)
 
-
-
-if __name__ == "__main__":
-    main()
+    return df
