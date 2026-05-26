@@ -9,19 +9,6 @@ import diverg
 import subprocess
 import parselmouth
 
-"""
-DIR1 = '1_wav_originaux'
-DIR2 = '2_wav_traites'
-DIR3 = '3_alignement_force'
-DIR4 = '4_qualite_vocale'
-DIR5 = '5_consonnes'
-DIR6 = '6_voyelles'
-DIR7 = '7_semi_consonnes'
-DIR8 = '8_Segments'
-DIR9 = 'Pitch_F0'
-DIR10 = 'Paty_alignment'
-DIR11 = 'Analyzed_results'
-"""
 
 TEXTE = open('../texte_entier.txt', 'r').read()
 TEXTE_EXTRAIT = TEXTE[:350]
@@ -149,7 +136,7 @@ def main():
         "praat", "--run", "11_formantTrans_glides.praat", processed_audio_path, tg_output_path, formants_output_path
     ])
 
-import os;print(os.getcwd())
+#import os;print(os.getcwd())
 
 if __name__ == "__main__":
     main()
