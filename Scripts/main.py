@@ -1,3 +1,4 @@
+import argparse
 import pandas as pd
 import requests
 from pathlib import Path
@@ -24,6 +25,8 @@ DIR11 = 'Analyzed_results'
 
 TEXTE = open('../texte_entier.txt', 'r').read()
 TEXTE_EXTRAIT = TEXTE[:350]
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parent.parent
 
 def forced_alignment(audio_file: Path, text_file: Path) -> str | None:
     url = "https://clarin.phonetik.uni-muenchen.de/BASWebServices/services/runMAUSBasic"
@@ -71,15 +74,35 @@ def measure_pitch(audio_file: Path) -> pd.DataFrame:
     return df
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("wav_path", type=Path, help="Path to the input wav file")
+    parser.add_argument(
+        "speaker_gender",
+        choices=("male", "female"),
+        help="Speaker gender used by the vowel triangle script",
+    )
+    return parser.parse_args()
+
+
 def main():
-    fichier_audio = Path("../../exemple/JP_2.wav")
-    fichier_texte = Path("../texte_entier.txt")
+    args = parse_args()
 
-    audio_traite = process_audio(fichier_audio)
-    audio_traite.export("../../JP_2.wav", format="wav")
+    audio_file_path = args.wav_path.resolve()
+    fichier_texte = (SCRIPT_DIR.parent / "texte_entier.txt").resolve()
+    speaker_code = "M" if args.speaker_gender == "male" else "F"
+    output_stem = audio_file_path.stem
+    processed_audio_path = PROJECT_ROOT / f"{output_stem}.wav"
+    tg_output_path = PROJECT_ROOT / f"{output_stem}.TextGrid"
+    diverg_output_path = PROJECT_ROOT / "result" / "divergences.csv"
+    spectral_debug_path = PROJECT_ROOT / "result" / "script_debug.txt"
+    input_csv_path = (PROJECT_ROOT / "input_triangle_voc.csv").resolve()
+    formants_output_path = PROJECT_ROOT / "result" / "formants_glides.csv"
 
-    textgrid_content = forced_alignment(Path("../../JP_2.wav"), fichier_texte)
-    tg_output_path = Path("../../JP_2.TextGrid")
+    processed_audio = process_audio(audio_file_path)
+    processed_audio.export(processed_audio_path, format="wav")
+
+    textgrid_content = forced_alignment(processed_audio_path, fichier_texte)
     
     if textgrid_content:
         with open(tg_output_path, "w") as f:
@@ -89,11 +112,11 @@ def main():
     consonnes = traitement_textgrid.extract_consonants(df_tg)
 
     subprocess.call([
-        "praat", "--run", "6_qualite_vocale.praat", "../../JP_2.wav", tg_output_path
+        "praat", "--run", "6_qualite_vocale.praat", processed_audio_path, tg_output_path
     ])
 
-    fe = AudioSegment.from_wav("../../JP_2.wav").frame_rate
-    data = AudioSegment.from_wav("../../JP_2.wav").get_array_of_samples()
+    fe = AudioSegment.from_wav(processed_audio_path).frame_rate
+    data = AudioSegment.from_wav(processed_audio_path).get_array_of_samples()
     order = 16
 
     frontieres, _ = diverg.segment(
@@ -110,20 +133,20 @@ def main():
 
     print(f"Ordre {order} : {len(frontieres)} Frontières")
     
-    diverg_df.to_csv("../../result/divergences.csv", index=False)
+    diverg_df.to_csv(diverg_output_path, index=False)
 
-    spectral_moments.extract_moments(consonnes, diverg_df, "../../result/script_debug.txt", "../../JP_2.wav")
-
-    input_csv_path = Path("../../input_triangle_voc.csv").resolve()
+    spectral_moments.extract_moments(consonnes, diverg_df, spectral_debug_path, processed_audio_path)
 
     with open(input_csv_path, "w") as f:
         f.write("Title;Speaker;File;Language;Log;Plotfile\n")
-        f.write("JP_2;M;JP_2.wav;FR;voweltriangle_praat.txt;JP_2_plot.png\n")
+        f.write(
+            f"{output_stem};{speaker_code};{processed_audio_path.name};FR;voweltriangle_praat.txt;{output_stem}_plot.png\n"
+        )
 
     subprocess.call(["praat", "--run", "10_VowelTriangle.praat", input_csv_path])
 
     subprocess.call([
-        "praat", "--run", "11_formantTrans_glides.praat", "../../JP_2.wav", tg_output_path, "../../result/formants_glides.csv"
+        "praat", "--run", "11_formantTrans_glides.praat", processed_audio_path, tg_output_path, formants_output_path
     ])
 
 import os;print(os.getcwd())
