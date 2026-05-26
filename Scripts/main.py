@@ -7,13 +7,15 @@ import spectral_moments
 import traitement_textgrid
 import diverg
 import subprocess
-import parselmouth
+import analysis.mesures_acoustiques as mesures 
 
 
 TEXTE = open('../texte_entier.txt', 'r').read()
 TEXTE_EXTRAIT = TEXTE[:350]
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent.parent
+RESULT_DIR = PROJECT_ROOT / "result"
+RESULT_DIR.mkdir(exist_ok=True)
 
 def forced_alignment(audio_file: Path, text_file: Path) -> str | None:
     url = "https://clarin.phonetik.uni-muenchen.de/BASWebServices/services/runMAUSBasic"
@@ -50,17 +52,6 @@ def process_audio(audio_file: Path) -> AudioSegment:
     return audio
 
 
-def measure_pitch(audio_file: Path) -> pd.DataFrame:
-    snd = parselmouth.Sound(audio_file)
-    pitch = snd.to_pitch(time_step=0.005, pitch_floor=50.0, pitch_ceiling=400.0)
-
-    df = pd.DataFrame({
-        "time": pitch.xs(),
-        "f0": pitch.selected_array["frequency"]
-    })
-    return df
-
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("wav_path", type=Path, help="Path to the input wav file")
@@ -81,10 +72,14 @@ def main():
     output_stem = audio_file_path.stem
     processed_audio_path = PROJECT_ROOT / f"{output_stem}.wav"
     tg_output_path = PROJECT_ROOT / f"{output_stem}.TextGrid"
-    diverg_output_path = PROJECT_ROOT / "result" / "divergences.csv"
-    spectral_debug_path = PROJECT_ROOT / "result" / "script_debug.txt"
+    diverg_output_path = RESULT_DIR / "divergences.csv"
+    spectral_debug_path = RESULT_DIR / "script_debug.txt"
     input_csv_path = (PROJECT_ROOT / "input_triangle_voc.csv").resolve()
-    formants_output_path = PROJECT_ROOT / "result" / "formants_glides.csv"
+    formants_output_path = RESULT_DIR / "formants_glides.csv"
+    mesure_vocale1_path = RESULT_DIR / "Measures_sent1.txt"
+    mesure_vocale2_path = RESULT_DIR / "Measures_sent2.txt"
+    voweltriangle_path = RESULT_DIR / "voweltriangle.txt"
+
 
     processed_audio = process_audio(audio_file_path)
     processed_audio.export(processed_audio_path, format="wav")
@@ -127,7 +122,7 @@ def main():
     with open(input_csv_path, "w") as f:
         f.write("Title;Speaker;File;Language;Log;Plotfile\n")
         f.write(
-            f"{output_stem};{speaker_code};{processed_audio_path.name};FR;voweltriangle_praat.txt;{output_stem}_plot.png\n"
+            f"{output_stem};{speaker_code};{processed_audio_path.name};FR;{voweltriangle_path.resolve()};{(RESULT_DIR / 'pictures' / (output_stem + '_plot.png')).resolve()}\n"
         )
 
     subprocess.call(["praat", "--run", "10_VowelTriangle.praat", input_csv_path])
@@ -136,7 +131,19 @@ def main():
         "praat", "--run", "11_formantTrans_glides.praat", processed_audio_path, tg_output_path, formants_output_path
     ])
 
-#import os;print(os.getcwd())
+    f0_df=mesures.measure_pitch(processed_audio_path)
+
+    mesures_df = mesures.mesures_acoustiques(
+        qualite_vocale=mesure_vocale1_path,
+        voweltriangle_path=voweltriangle_path,
+        f0_df=f0_df,
+        tg_content=textgrid_content, # type: ignore
+        audio_file=processed_audio_path,
+    )
+
+    print(mesures_df)
+    mesures_df.to_csv(RESULT_DIR / "measures_acoustiques.csv")
+
 
 if __name__ == "__main__":
     main()
