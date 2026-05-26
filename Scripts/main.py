@@ -74,17 +74,17 @@ def measure_pitch(audio_file: Path) -> pd.DataFrame:
 def main():
     fichier_audio = Path("../../exemple/JP_2.wav")
     fichier_texte = Path("../texte_entier.txt")
-    """
+
     audio_traite = process_audio(fichier_audio)
     audio_traite.export("../../JP_2.wav", format="wav")
+
     textgrid_content = forced_alignment(Path("../../JP_2.wav"), fichier_texte)
-    """
     tg_output_path = Path("../../JP_2.TextGrid")
-    """
+    
     if textgrid_content:
         with open(tg_output_path, "w") as f:
             f.write(textgrid_content)
-    """
+
     df_tg = traitement_textgrid.tier_to_df(tg_output_path, 2)
     consonnes = traitement_textgrid.extract_consonants(df_tg)
 
@@ -114,8 +114,17 @@ def main():
 
     spectral_moments.extract_moments(consonnes, diverg_df, "../../result/script_debug.txt", "../../JP_2.wav")
 
+    input_csv_path = Path("../../input_triangle_voc.csv").resolve()
 
-    subprocess.call(["praat", "--run", "11_formantTrans_glides.praat", "../../JP_2.wav", tg_output_path, "../../result/formants_glides.csv"])
+    with open(input_csv_path, "w") as f:
+        f.write("Title;Speaker;File;Language;Log;Plotfile\n")
+        f.write("JP_2;M;JP_2.wav;FR;voweltriangle_praat.txt;JP_2_plot.png\n")
+
+    subprocess.call(["praat", "--run", "10_VowelTriangle.praat", input_csv_path])
+
+    subprocess.call([
+        "praat", "--run", "11_formantTrans_glides.praat", "../../JP_2.wav", tg_output_path, "../../result/formants_glides.csv"
+    ])
 
 import os;print(os.getcwd())
 
