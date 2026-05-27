@@ -33,10 +33,86 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 PRAAT_SCRIPT = SCRIPT_DIR / "script_spectral_moments_python.praat"
 PLOSIVE_FRAME_SIZE = 0.005
 FRICATIVE_FRAME_SIZE = 0.01
+PRAAT_LABEL_ORDER = (
+    "p1",
+    "p2",
+    "p3",
+    "p4",
+    "p5",
+    "p6",
+    "p7",
+    "p8",
+    "p9",
+    "t1",
+    "t2",
+    "t3",
+    "t4",
+    "k1",
+    "k2",
+    "k3",
+    "k4",
+    "b",
+    "d",
+    "g1",
+    "g2",
+    "f",
+    "s",
+    "ch",
+    "v1",
+    "v2",
+    "z",
+    "j",
+)
+DEBUG_WINDOW_GROUPS = (
+    ("p", ("p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9")),
+    ("t", ("t1", "t2", "t3", "t4")),
+    ("k", ("k1", "k2", "k3", "k4")),
+    ("b", ("b",)),
+    ("d", ("d",)),
+    ("g", ("g1", "g2")),
+    ("f", ("f",)),
+    ("s", ("s",)),
+    ("ch", ("ch",)),
+    ("v", ("v1", "v2")),
+    ("z", ("z",)),
+    ("j", ("j",)),
+)
 
 
 def _praat_result_dir(path: Path) -> str:
     return f"{path.resolve().as_posix().rstrip('/')}/"
+
+
+def _default_window(ruptures, segment_end: float, frame_size: float) -> float:
+    return segment_end - frame_size if not ruptures else 0.0
+
+
+def _build_praat_command(
+    praat_id: str,
+    praat_wav_dir: Path,
+    labels: dict[str, str],
+    windows: dict[str, float],
+    praat_result_dir: str,
+) -> list[str]:
+    return [
+        "praat",
+        "--run",
+        str(PRAAT_SCRIPT),
+        praat_id,
+        str(praat_wav_dir),
+        *[labels[name] for name in PRAAT_LABEL_ORDER],
+        *[str(windows[name]) for name in PRAAT_LABEL_ORDER],
+        praat_result_dir,
+    ]
+
+
+def _write_debug_windows(result_file_path: Path, windows: dict[str, float]) -> None:
+    with open(result_file_path, "a") as result_file:
+        for prefix, names in DEBUG_WINDOW_GROUPS:
+            values = "".join(
+                f"mom_win_{name} = {round(windows[name], 6):<20}" for name in names
+            )
+            result_file.writelines(f"{values}\n" if prefix != "p" else f"\n{values}\n")
 
 
 def extract_moments(
@@ -44,7 +120,7 @@ def extract_moments(
     diverg_df: pd.DataFrame,
     resFile: str | Path,
     soundfile: Path,
-):
+) -> None:
     soundfile = Path(soundfile).resolve()
     result_file_path = Path(resFile).resolve()
     result_file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -267,106 +343,31 @@ def extract_moments(
     frame_size_plos = PLOSIVE_FRAME_SIZE
     frame_size_fric = FRICATIVE_FRAME_SIZE
 
-    # FOR UNVOICED PLOSIVES
-    mom_win_p1 = 0
-    mom_win_p2 = 0
-    mom_win_p3 = 0
-    mom_win_p4 = 0
-    mom_win_p5 = 0
-    mom_win_p6 = 0
-    mom_win_p7 = 0
-    mom_win_p8 = 0
-    mom_win_p9 = 0
-    mom_win_t1 = 0
-    mom_win_t2 = 0
-    mom_win_t3 = 0
-    mom_win_t4 = 0
-    mom_win_k1 = 0
-    mom_win_k2 = 0
-    mom_win_k3 = 0
-    mom_win_k4 = 0
-
-    # if there is no rupture inside of the consonant segment, then plos_end - window size is the analysis window location
-    # if there are ruptures, rupt_right is the rupture that is immediately smaller or equal to the right border of the alignment segment
-    if len(p1_rupt) < 1:
-        mom_win_p1 = plos_p1_end - frame_size_plos
-    else:
-        p1_rupt_right = float(p1_rupt[-1])
-    if len(p2_rupt) < 1:
-        mom_win_p2 = plos_p2_end - frame_size_plos
-    else:
-        p2_rupt_right = float(p2_rupt[-1])
-    if len(p3_rupt) < 1:
-        mom_win_p3 = plos_p3_end - frame_size_plos
-    else:
-        p3_rupt_right = float(p3_rupt[-1])
-    if len(p4_rupt) < 1:
-        mom_win_p4 = plos_p4_end - frame_size_plos
-    else:
-        p4_rupt_right = float(p4_rupt[-1])
-    if len(p5_rupt) < 1:
-        mom_win_p5 = plos_p5_end - frame_size_plos
-    else:
-        p5_rupt_right = float(p5_rupt[-1])
-    if len(p6_rupt) < 1:
-        mom_win_p6 = plos_p6_end - frame_size_plos
-    else:
-        p6_rupt_right = float(p6_rupt[-1])
-    if len(p7_rupt) < 1:
-        mom_win_p7 = plos_p7_end - frame_size_plos
-    else:
-        p7_rupt_right = float(p7_rupt[-1])
-    if len(p8_rupt) < 1:
-        mom_win_p8 = plos_p8_end - frame_size_plos
-    else:
-        p8_rupt_right = float(p8_rupt[-1])
-    if len(p9_rupt) < 1:
-        mom_win_p9 = plos_p9_end - frame_size_plos
-    else:
-        p9_rupt_right = float(p9_rupt[-1])
-
-    if len(t1_rupt) < 1:
-        mom_win_t1 = plos_t1_end - frame_size_plos
-    else:
-        t1_rupt_right = float(t1_rupt[-1])
-    if len(t2_rupt) < 1:
-        mom_win_t2 = plos_t2_end - frame_size_plos
-    else:
-        t2_rupt_right = float(t2_rupt[-1])
-    if len(t3_rupt) < 1:
-        mom_win_t3 = plos_t3_end - frame_size_plos
-    else:
-        t3_rupt_right = float(t3_rupt[-1])
-    if len(t4_rupt) < 1:
-        mom_win_t4 = plos_t4_end - frame_size_plos
-    else:
-        t4_rupt_right = float(t4_rupt[-1])
-
-    if len(k1_rupt) < 1:
-        mom_win_k1 = plos_k1_end - frame_size_plos
-    else:
-        k1_rupt_right = float(k1_rupt[-1])
-    if len(k2_rupt) < 1:
-        mom_win_k2 = plos_k2_end - frame_size_plos
-    else:
-        k2_rupt_right = float(k2_rupt[-1])
-    if len(k3_rupt) < 1:
-        mom_win_k3 = plos_k3_end - frame_size_plos
-    else:
-        k3_rupt_right = float(k3_rupt[-1])
-    if len(k4_rupt) < 1:
-        mom_win_k4 = plos_k4_end - frame_size_plos
-    else:
-        k4_rupt_right = float(k4_rupt[-1])
+    # Default windows for unvoiced plosives fall back to segment end - frame size.
+    mom_win_p1 = _default_window(p1_rupt, plos_p1_end, frame_size_plos)
+    mom_win_p2 = _default_window(p2_rupt, plos_p2_end, frame_size_plos)
+    mom_win_p3 = _default_window(p3_rupt, plos_p3_end, frame_size_plos)
+    mom_win_p4 = _default_window(p4_rupt, plos_p4_end, frame_size_plos)
+    mom_win_p5 = _default_window(p5_rupt, plos_p5_end, frame_size_plos)
+    mom_win_p6 = _default_window(p6_rupt, plos_p6_end, frame_size_plos)
+    mom_win_p7 = _default_window(p7_rupt, plos_p7_end, frame_size_plos)
+    mom_win_p8 = _default_window(p8_rupt, plos_p8_end, frame_size_plos)
+    mom_win_p9 = _default_window(p9_rupt, plos_p9_end, frame_size_plos)
+    mom_win_t1 = _default_window(t1_rupt, plos_t1_end, frame_size_plos)
+    mom_win_t2 = _default_window(t2_rupt, plos_t2_end, frame_size_plos)
+    mom_win_t3 = _default_window(t3_rupt, plos_t3_end, frame_size_plos)
+    mom_win_t4 = _default_window(t4_rupt, plos_t4_end, frame_size_plos)
+    mom_win_k1 = _default_window(k1_rupt, plos_k1_end, frame_size_plos)
+    mom_win_k2 = _default_window(k2_rupt, plos_k2_end, frame_size_plos)
+    mom_win_k3 = _default_window(k3_rupt, plos_k3_end, frame_size_plos)
+    mom_win_k4 = _default_window(k4_rupt, plos_k4_end, frame_size_plos)
 
     # read sound file and get sample rate to adapt the number of samples per frame size accordingly
     snd = AudioSegment.from_wav(soundfile)
     samp_freq = snd.frame_rate
-    n_per_frame = float((samp_freq * frame_size_plos))
-
     # calculate total intensity of central 20ms of the forced alignment segment (supposedly silence), averaged and normalized
 
-    y, sr = librosa.load(soundfile, sr=samp_freq)
+    y, _ = librosa.load(soundfile, sr=samp_freq)
 
     parsound = parselmouth.Sound(str(soundfile))
 
@@ -3197,162 +3198,74 @@ def extract_moments(
                     )
             i = i + 1
 
-    # transform to strings for Praat input
-    mom_win_p1p = str(mom_win_p1)
-    mom_win_p2p = str(mom_win_p2)
-    mom_win_p3p = str(mom_win_p3)
-    mom_win_p4p = str(mom_win_p4)
-    mom_win_p5p = str(mom_win_p5)
-    mom_win_p6p = str(mom_win_p6)
-    mom_win_p7p = str(mom_win_p7)
-    mom_win_p8p = str(mom_win_p8)
-    mom_win_p9p = str(mom_win_p9)
-    mom_win_t1p = str(mom_win_t1)
-    mom_win_t2p = str(mom_win_t2)
-    mom_win_t3p = str(mom_win_t3)
-    mom_win_t4p = str(mom_win_t4)
-    mom_win_k1p = str(mom_win_k1)
-    mom_win_k2p = str(mom_win_k2)
-    mom_win_k3p = str(mom_win_k3)
-    mom_win_k4p = str(mom_win_k4)
-    mom_win_bp = str(mom_win_b)
-    mom_win_dp = str(mom_win_d)
-    mom_win_g1p = str(mom_win_g1)
-    mom_win_g2p = str(mom_win_g2)
-    mom_win_fp = str(mom_win_f)
-    mom_win_sp = str(mom_win_s)
-    mom_win_chp = str(mom_win_ch)
-    mom_win_v1p = str(mom_win_v1)
-    mom_win_v2p = str(mom_win_v2)
-    mom_win_zp = str(mom_win_z)
-    mom_win_jp = str(mom_win_j)
+    labels = {
+        "p1": p1_str,
+        "p2": p2_str,
+        "p3": p3_str,
+        "p4": p4_str,
+        "p5": p5_str,
+        "p6": p6_str,
+        "p7": p7_str,
+        "p8": p8_str,
+        "p9": p9_str,
+        "t1": t1_str,
+        "t2": t2_str,
+        "t3": t3_str,
+        "t4": t4_str,
+        "k1": k1_str,
+        "k2": k2_str,
+        "k3": k3_str,
+        "k4": k4_str,
+        "b": b_str,
+        "d": d_str,
+        "g1": g1_str,
+        "g2": g2_str,
+        "f": f_str,
+        "s": s_str,
+        "ch": ch_str,
+        "v1": v1_str,
+        "v2": v2_str,
+        "z": z_str,
+        "j": j_str,
+    }
+    windows = {
+        "p1": mom_win_p1,
+        "p2": mom_win_p2,
+        "p3": mom_win_p3,
+        "p4": mom_win_p4,
+        "p5": mom_win_p5,
+        "p6": mom_win_p6,
+        "p7": mom_win_p7,
+        "p8": mom_win_p8,
+        "p9": mom_win_p9,
+        "t1": mom_win_t1,
+        "t2": mom_win_t2,
+        "t3": mom_win_t3,
+        "t4": mom_win_t4,
+        "k1": mom_win_k1,
+        "k2": mom_win_k2,
+        "k3": mom_win_k3,
+        "k4": mom_win_k4,
+        "b": mom_win_b,
+        "d": mom_win_d,
+        "g1": mom_win_g1,
+        "g2": mom_win_g2,
+        "f": mom_win_f,
+        "s": mom_win_s,
+        "ch": mom_win_ch,
+        "v1": mom_win_v1,
+        "v2": mom_win_v2,
+        "z": mom_win_z,
+        "j": mom_win_j,
+    }
 
-    # call Praat script to compute spectral moments with the analysis windows as input
     subprocess.call(
-        [
-            "praat",
-            "--run",
-            str(PRAAT_SCRIPT),
+        _build_praat_command(
             praat_id,
-            str(praat_wav_dir),
-            p1_str,
-            p2_str,
-            p3_str,
-            p4_str,
-            p5_str,
-            p6_str,
-            p7_str,
-            p8_str,
-            p9_str,
-            t1_str,
-            t2_str,
-            t3_str,
-            t4_str,
-            k1_str,
-            k2_str,
-            k3_str,
-            k4_str,
-            b_str,
-            d_str,
-            g1_str,
-            g2_str,
-            f_str,
-            s_str,
-            ch_str,
-            v1_str,
-            v2_str,
-            z_str,
-            j_str,
-            mom_win_p1p,
-            mom_win_p2p,
-            mom_win_p3p,
-            mom_win_p4p,
-            mom_win_p5p,
-            mom_win_p6p,
-            mom_win_p7p,
-            mom_win_p8p,
-            mom_win_p9p,
-            mom_win_t1p,
-            mom_win_t2p,
-            mom_win_t3p,
-            mom_win_t4p,
-            mom_win_k1p,
-            mom_win_k2p,
-            mom_win_k3p,
-            mom_win_k4p,
-            mom_win_bp,
-            mom_win_dp,
-            mom_win_g1p,
-            mom_win_g2p,
-            mom_win_fp,
-            mom_win_sp,
-            mom_win_chp,
-            mom_win_v1p,
-            mom_win_v2p,
-            mom_win_zp,
-            mom_win_jp,
+            praat_wav_dir,
+            labels,
+            windows,
             praat_result_dir,
-        ]
+        )
     )
-
-    with open(result_file_path, "a") as result_file:
-        result_file.writelines(
-            "\nmom_win_p1 = {:<20}mom_win_p2 = {:<20}mom_win_p3 = {:<20}mom_win_p4 = {:<20}mom_win_p5 = {:<20}mom_win_p6 = {:<20}mom_win_p7 = {:<20}mom_win_p8 = {:<20}mom_win_p9 = {:<20}\n".format(
-                round(mom_win_p1, 6),
-                round(mom_win_p2, 6),
-                round(mom_win_p3, 6),
-                round(mom_win_p4, 6),
-                round(mom_win_p5, 6),
-                round(mom_win_p6, 6),
-                round(mom_win_p7, 6),
-                round(mom_win_p8, 6),
-                round(mom_win_p9, 6),
-            )
-        )
-        result_file.writelines(
-            "mom_win_t1 = {:<20}mom_win_t2 = {:<20}mom_win_t3 = {:<20}mom_win_t4 = {:<20}\n".format(
-                round(mom_win_t1, 6),
-                round(mom_win_t2, 6),
-                round(mom_win_t3, 6),
-                round(mom_win_t4, 6),
-            )
-        )
-        result_file.writelines(
-            "mom_win_k1 = {:<20}mom_win_k2 = {:<20}mom_win_k3 = {:<20}mom_win_k4 = {:<20}\n".format(
-                round(mom_win_k1, 6),
-                round(mom_win_k2, 6),
-                round(mom_win_k3, 6),
-                round(mom_win_k4, 6),
-            )
-        )
-        result_file.writelines(
-            "mom_win_b = {:<20}\n".format(round(mom_win_b, 6))
-        )
-        result_file.writelines(
-            "mom_win_d = {:<20}\n".format(round(mom_win_d, 6))
-        )
-        result_file.writelines(
-            "mom_win_g1 = {:<20}mom_win_g2 = {:<20}\n".format(
-                round(mom_win_g1, 6), round(mom_win_g2, 6)
-            )
-        )
-        result_file.writelines(
-            "mom_win_f = {:<20}\n".format(round(mom_win_f, 6))
-        )
-        result_file.writelines(
-            "mom_win_s = {:<20}\n".format(round(mom_win_s, 6))
-        )
-        result_file.writelines(
-            "mom_win_ch = {:<20}\n".format(round(mom_win_ch, 6))
-        )
-        result_file.writelines(
-            "mom_win_v1 = {:<20}mom_win_v2 = {:<20}\n".format(
-                round(mom_win_v1, 6), round(mom_win_v2, 6)
-            )
-        )
-        result_file.writelines(
-            "mom_win_z = {:<20}\n".format(round(mom_win_z, 6))
-        )
-        result_file.writelines(
-            "mom_win_j = {:<20}\n".format(round(mom_win_j, 6))
-        )
+    _write_debug_windows(result_file_path, windows)
