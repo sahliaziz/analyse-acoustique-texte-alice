@@ -5,13 +5,34 @@ Date: 2022
 """
 
 from pathlib import Path
+from dataclasses import dataclass
+from enum import Enum
 import re
 from pydub import AudioSegment
 import parselmouth
 import numpy as np
 import pandas as pd
-from segment import Segment, SegmentType
 from silero_vad import get_speech_timestamps, load_silero_vad
+
+
+
+class SegmentType(Enum):
+    """Represents the segment type of the segment. It can be SILENCE (1) or VOICE (2)."""
+    SILENCE = 1
+    VOICE = 2
+
+
+@dataclass
+class Segment:
+    """Represents a "segment" of audio frames by the start timecode, the end timecode, the duration / length of the
+    segment and its type (SILENCE or VOICE)."""
+    start: float
+    end: float
+    duration: float
+    type: SegmentType
+
+    def __str__(self) -> str:
+        return f"{self.type} : {self.start} -> {self.end} [{self.duration}]"
 
 
 def read_wav(path : Path | str) -> tuple[bytes, int, float]:
