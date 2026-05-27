@@ -18,21 +18,40 @@
 # rupture2 time	forward/backward
 # etc.
 
-import wave
+import math
+import subprocess
+import sys
+from pathlib import Path
+
 import librosa
 import numpy
-import sys
-import subprocess
 import parselmouth
-import math
 import pandas as pd
+from pydub import AudioSegment
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+PRAAT_SCRIPT = SCRIPT_DIR / "script_spectral_moments_python.praat"
+PLOSIVE_FRAME_SIZE = 0.005
+FRICATIVE_FRAME_SIZE = 0.01
 
 
-resDir = "../../result/"
-wavDir = "/home/ash/Documents/Stage/analyse_acoustique_texte_Alice_v2"
-ID = "JP_2"
+def _praat_result_dir(path: Path) -> str:
+    return f"{path.resolve().as_posix().rstrip('/')}/"
 
-def extract_moments(fa_df: pd.DataFrame, diverg_df: pd.DataFrame, resFile, soundfile):
+
+def extract_moments(
+    fa_df: pd.DataFrame,
+    diverg_df: pd.DataFrame,
+    resFile: str | Path,
+    soundfile: Path,
+):
+    soundfile = Path(soundfile).resolve()
+    result_file_path = Path(resFile).resolve()
+    result_file_path.parent.mkdir(parents=True, exist_ok=True)
+    praat_id = soundfile.stem
+    praat_wav_dir = soundfile.parent
+    praat_result_dir = _praat_result_dir(result_file_path.parent)
+
     plos_p1 = fa_df.iloc[0]
     plos_p2 = fa_df.iloc[2]
     plos_p3 = fa_df.iloc[3]
@@ -245,8 +264,8 @@ def extract_moments(fa_df: pd.DataFrame, diverg_df: pd.DataFrame, resFile, sound
 
     j_rupt = [x for x in ruptures if x >= fric_j_beg and x <= fric_j_end]
 
-    frame_size_plos = 0.005
-    frame_size_fric = 0.01
+    frame_size_plos = PLOSIVE_FRAME_SIZE
+    frame_size_fric = FRICATIVE_FRAME_SIZE
 
     # FOR UNVOICED PLOSIVES
     mom_win_p1 = 0
@@ -341,16 +360,15 @@ def extract_moments(fa_df: pd.DataFrame, diverg_df: pd.DataFrame, resFile, sound
         k4_rupt_right = float(k4_rupt[-1])
 
     # read sound file and get sample rate to adapt the number of samples per frame size accordingly
-    snd = wave.open(soundfile, "rb")
-    samp_freq = float(snd.getframerate())
+    snd = AudioSegment.from_wav(soundfile)
+    samp_freq = snd.frame_rate
     n_per_frame = float((samp_freq * frame_size_plos))
-    snd.close()
 
     # calculate total intensity of central 20ms of the forced alignment segment (supposedly silence), averaged and normalized
 
     y, sr = librosa.load(soundfile, sr=samp_freq)
 
-    parsound = parselmouth.Sound(soundfile)
+    parsound = parselmouth.Sound(str(soundfile))
 
     p1_mid_silence_beg = int(
         ((plos_p1_beg + ((plos_p1_end - plos_p1_beg) / 2)) - 0.01) * samp_freq
@@ -3214,9 +3232,9 @@ def extract_moments(fa_df: pd.DataFrame, diverg_df: pd.DataFrame, resFile, sound
         [
             "praat",
             "--run",
-            "script_spectral_moments_python.praat",
-            ID,
-            wavDir,
+            str(PRAAT_SCRIPT),
+            praat_id,
+            str(praat_wav_dir),
             p1_str,
             p2_str,
             p3_str,
@@ -3273,11 +3291,11 @@ def extract_moments(fa_df: pd.DataFrame, diverg_df: pd.DataFrame, resFile, sound
             mom_win_v2p,
             mom_win_zp,
             mom_win_jp,
-            resDir,
+            praat_result_dir,
         ]
     )
 
-    with open(resFile, "a") as result_file:
+    with open(result_file_path, "a") as result_file:
         result_file.writelines(
             "\nmom_win_p1 = {:<20}mom_win_p2 = {:<20}mom_win_p3 = {:<20}mom_win_p4 = {:<20}mom_win_p5 = {:<20}mom_win_p6 = {:<20}mom_win_p7 = {:<20}mom_win_p8 = {:<20}mom_win_p9 = {:<20}\n".format(
                 round(mom_win_p1, 6),
