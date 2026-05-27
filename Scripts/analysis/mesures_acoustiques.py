@@ -195,6 +195,48 @@ def vowel_analysis(path: Path | str) -> pd.DataFrame:
     return df
 
 
+def mesures_acoustiques_consonnes(path: Path | str) -> pd.DataFrame:
+    """Format spectral-moment output for a single file.
+
+    Takes the path to `spectralmoments_python.txt` generated for one recording and
+    returns only the relevant consonant measures.
+    """
+    df = pd.read_csv(path, sep="\t", header=None)
+    rows: list[list[str]] = []
+
+    for _, row in df.iloc[1:].iterrows():
+        if any(row.iloc[index] == "--undefined--" for index in range(2, 6)):
+            continue
+
+        file_id = str(row.iloc[0])
+        rows.append(
+            [
+                file_id[:-4],
+                file_id[-1],
+                file_id[-3],
+                row.iloc[1],
+                row.iloc[2],
+                row.iloc[3],
+                row.iloc[4],
+                row.iloc[5],
+            ]
+        )
+
+    return pd.DataFrame(
+        rows,
+        columns=[
+            "sujet",
+            "genre",
+            "repetition",
+            "phoneme",
+            "cog",
+            "sd",
+            "skew",
+            "kurt",
+        ],
+    )
+
+
 def measure_pitch(audio_file: Path) -> pd.DataFrame:
     snd = parselmouth.Sound(str(audio_file))
     pitch = snd.to_pitch(time_step=0.005, pitch_floor=50.0, pitch_ceiling=400.0)
