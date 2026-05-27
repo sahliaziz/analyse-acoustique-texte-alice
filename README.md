@@ -1,4 +1,6 @@
-# “Le voyage d’Alice” - Extraction des mesures acoustiques de la parole et de la voix sur une lecture à voix haute du texte standardisé
+# Le voyage d’Alice
+
+Pipeline d'extraction des mesures acoustiques de la parole et de la voix sur une lecture à voix haute du texte standardisé "Le voyage d'Alice"
 
 
 ## Prerequis
