@@ -10,8 +10,6 @@ import subprocess
 import analysis.mesures_acoustiques as mesures 
 
 
-# TEXTE = open('../texte_entier.txt', 'r').read()
-# TEXTE_EXTRAIT = TEXTE[:350]
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent.parent
 RESULT_DIR = PROJECT_ROOT / "result"
