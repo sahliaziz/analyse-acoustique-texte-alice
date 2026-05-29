@@ -180,23 +180,27 @@ if audio_files is not None:
 
         st.divider()
 
-
         st.subheader("1) Mesures de qualité vocale")
-
-        st.image(file_result_dir / "pictures" / f"{output_stem}_sent1.png", caption="Analyses acoustiques de la première phrase")
-        st.image(file_result_dir / "pictures" / f"{output_stem}_sent2.png", caption="Analyses acoustiques de la deuxième phrase")
+        st.write("Analyses acoustiques de la première phrase")
+        st.image(file_result_dir / "pictures" / f"{output_stem}_sent1.png")
+        st.write("Analyses acoustiques de la deuxième phrase")
+        st.image(file_result_dir / "pictures" / f"{output_stem}_sent2.png")
 
         st.subheader("2) Mesures vocaliques")
-        st.write(mesures_df, "Mesures vocaliques extraites de l'enregistrement")
-        st.image(file_result_dir / "pictures" / f"{output_stem}_plot.png", caption="Triangle vocalique")
+        st.write("Mesures vocaliques extraites de l'enregistrement")
+        st.write(mesures_df)
+        st.write("Triangle vocalique")
+        st.image(file_result_dir / "pictures" / f"{output_stem}_plot.png")
 
         st.subheader("3) Mesures consonantiques")
         mesures_cons_df = mesures.mesures_acoustiques_consonnes(spectral_moments_output_path)
-        st.write(mesures_cons_df, "Mesures consonantiques extraites de l'enregistrement")
+        st.write("Mesures consonantiques extraites de l'enregistrement")
+        st.write(mesures_cons_df)
 
         st.subheader("4) Mesure semi-consonantique")
         mesures_semivoyelles_df = mesures.mesures_acoustiques_semivoyelles(formants_output_path)
-        st.write(mesures_semivoyelles_df, "Mesures semi-voyelles extraites de l'enregistrement")
+        st.write("Mesures semi-voyelles extraites de l'enregistrement")
+        st.write(mesures_semivoyelles_df)
 
 
         mesures_df.to_csv(file_result_dir / "mesures_acoustiques.csv", index=False)
