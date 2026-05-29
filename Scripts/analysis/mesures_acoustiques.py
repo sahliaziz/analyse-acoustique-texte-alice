@@ -176,7 +176,7 @@ def vocal_quality_analysis(path: Path | str) -> pd.DataFrame:
     """Reads a .csv file.
     Takes a .csv file created by "6_qualite_vocale.praat", and returns a dataframe of relevant measures.
     """
-    df = pd.read_csv(path, header=None, sep=";")
+    df = pd.read_csv(path, header=None)
 
     return pd.DataFrame({
         "fichier":    df.iloc[:, 0],
@@ -198,10 +198,10 @@ def vowel_analysis(path: Path | str) -> pd.DataFrame:
 def mesures_acoustiques_consonnes(path: Path | str) -> pd.DataFrame:
     """Format spectral-moment output for a single file.
 
-    Takes the path to `spectralmoments.txt` generated for one recording and
+    Takes the path to `spectralmoments.csv` generated for one recording and
     returns only the relevant consonant measures.
     """
-    df = pd.read_csv(path, sep="\t", header=None)
+    df = pd.read_csv(path, header=None)
     rows: list[list[str]] = []
 
     for _, row in df.iloc[1:].iterrows():
@@ -222,12 +222,12 @@ def mesures_acoustiques_consonnes(path: Path | str) -> pd.DataFrame:
     return pd.DataFrame(
         rows,
         columns=[
-            "fichier",
-            "phoneme",
-            "cog",
-            "sd",
-            "skew",
-            "kurt"
+            "Fichier",
+            "Phonème",
+            "CoG",
+            "SD",
+            "SKEW",
+            "Kurtosis"
         ]
     )
 
@@ -253,7 +253,7 @@ def mesures_acoustiques_semivoyelles(path: Path) -> pd.DataFrame:
     return pd.DataFrame(
         rows,
         columns=[
-            "phoneme",
+            "Phonème",
             "f1_slope",
             "f2_slope",
             "f3_slope",

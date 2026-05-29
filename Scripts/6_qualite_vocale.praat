@@ -2,13 +2,13 @@
 # This script is part of Timothy Pommée's PhD thesis (2021) and has been adapted from Maryn, Corthals & Barsties (Acoustic Voice Quality Index 03.01)
 
 form Select input files
+	sentence resultdir 
 	sentence wavfile input.wav
 	sentence textgridfile input.TextGrid
 endform
 
-dir_output$ = "../../result/"
-dir_pictures$ = dir_output$ + "pictures/"
-dir_onlyvoiced$ = dir_output$ + "only_voiced/"
+dir_pictures$ = resultdir$ + "/pictures/"
+dir_onlyvoiced$ = resultdir$ + "/only_voiced/"
 
 
 Erase all
@@ -291,10 +291,10 @@ endfor
 
 	# Copy Praat picture
 	Select inner viewport... 0.5 7.5 0 7.4
-	Save as 600-dpi PNG file: dir_pictures$ + fileName$ + "_sent1.png"
+	Save as 600-dpi PNG file: dir_pictures$ + fileName_raw$ + "_sent1.png"
 
 	# Copy data to file
-	appendFileLine: dir_output$ + "Measures_sent1.txt", fileName$, " ; ", fixed$ (cpps, 2), " ; ", fixed$ (slope, 2), " ; ", fixed$ (tilt, 2), " ; "
+	appendFileLine: resultdir$ + "/Measures_sent1.txt", fileName$, ",", fixed$ (cpps, 2), ",", fixed$ (slope, 2), ",", fixed$ (tilt, 2), ","
 
 	# Save sound file with only voiced segments
 	select Sound cs
@@ -564,10 +564,10 @@ endfor
 
 		# Copy Praat picture
 		Select inner viewport... 0.5 7.5 0 7.4
-		Save as 600-dpi PNG file: dir_pictures$ + fileName$ + "_sent2.png"
+		Save as 600-dpi PNG file: dir_pictures$ + fileName_raw$ + "_sent2.png"
 
 		# Copy data to file
-		appendFileLine: dir_output$ + "Measures_sent2.txt", fileName$, " ; ", fixed$ (cpps, 2), " ; ", fixed$ (slope, 2), " ; ", fixed$ (tilt, 2), " ; "
+		appendFileLine: resultdir$ + "/Measures_sent2.txt", fileName$, ",", fixed$ (cpps, 2), ",", fixed$ (slope, 2), ",", fixed$ (tilt, 2), ","
 
 		# Save sound file with only voiced segments
 		select Sound cs
