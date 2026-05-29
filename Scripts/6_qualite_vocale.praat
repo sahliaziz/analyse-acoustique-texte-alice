@@ -20,7 +20,7 @@ Text special... 0.5 centre 0.4 half Helvetica 12 0 sound files, this script take
 
 
 tier = 1
-fileName$ = replace_regex$(wavfile$, ".*/", "", 0)
+fileName$ = replace_regex$(wavfile$, ".*[/\\]", "", 0)
 fileName_raw$ = replace_regex$(fileName$, "(?i)\.wav$", "", 0)
 
 Read from file: textgridfile$
@@ -257,7 +257,7 @@ endfor
 
 	Select inner viewport... 0.5 5 4.1 5.6
 	select PowerCepstrogram cs
-	Paint: 0, 0, 0, 0, 80, "no", 30, 0, "yes"
+	Paint: 0, 0, 0, 0, 80, "no", 30, 0, "no"
 	Draw inner box
 	One mark left... 0.00303 no yes no 0.003
 	One mark left... 0.01667 no yes no 0.017
@@ -530,7 +530,7 @@ endfor
 
 		Select inner viewport... 0.5 5 4.1 5.6
 		select PowerCepstrogram cs
-		Paint: 0, 0, 0, 0, 80, "no", 30, 0, "yes"
+		Paint: 0, 0, 0, 0, 80, "no", 30, 0, "no"
 		Draw inner box
 		One mark left... 0.00303 no yes no 0.003
 		One mark left... 0.01667 no yes no 0.017
