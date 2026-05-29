@@ -14,6 +14,10 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent.parent
 RESULT_DIR = PROJECT_ROOT / "result"
 RESULT_DIR.mkdir(exist_ok=True)
+RESULT_DIR_PICTURES = RESULT_DIR / "pictures"
+RESULT_DIR_PICTURES.mkdir(exist_ok=True)
+RESULT_DIR_ONLYVOICED = RESULT_DIR / "only_voiced"
+RESULT_DIR_ONLYVOICED.mkdir(exist_ok=True)
 
 def forced_alignment(audio_file: Path, text_file: Path) -> str | None:
     url = "https://clarin.phonetik.uni-muenchen.de/BASWebServices/services/runMAUSBasic"
@@ -79,15 +83,15 @@ def main():
     mesure_vocale2_path = RESULT_DIR / "Measures_sent2.txt"
     voweltriangle_path = RESULT_DIR / "voweltriangle.txt"
 
-    print("[1/9] Traitement de l'audio...")
-    processed_audio = process_audio(audio_file_path)
-    processed_audio.export(processed_audio_path, format="wav")
+    # print("[1/9] Traitement de l'audio...")
+    # processed_audio = process_audio(audio_file_path)
+    # processed_audio.export(processed_audio_path, format="wav")
 
     print("[2/9] Alignement forcé...")
     textgrid_content = forced_alignment(processed_audio_path, fichier_texte)
     
     if textgrid_content:
-        with open(tg_output_path, "w") as f:
+        with open(tg_output_path, "w", encoding="utf-8") as f:
             f.write(textgrid_content)
 
     df_tg = traitement_textgrid.tier_to_df(tg_output_path, 2)
