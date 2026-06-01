@@ -291,15 +291,15 @@ endfor
 
 	# Copy Praat picture
 	Select inner viewport... 0.5 7.5 0 7.4
-	Save as 600-dpi PNG file: dir_pictures$ + fileName_raw$ + "_sent1.png"
+	Save as 600-dpi PNG file: dir_pictures$ + fileName_raw$ + "_phrase1.png"
 
 	# Copy data to file
-	appendFileLine: resultdir$ + "/Measures_sent1.txt", fileName$, ",", fixed$ (cpps, 2), ",", fixed$ (slope, 2), ",", fixed$ (tilt, 2), ","
+	appendFileLine: resultdir$ + "/Measures_phrase1.txt", fileName$, ",", fixed$ (cpps, 2), ",", fixed$ (slope, 2), ",", fixed$ (tilt, 2), ","
 
 	# Save sound file with only voiced segments
 	select Sound cs
 	fileName_onlyvoiced1$ = fileName_raw$ + "_OnlyVoiced"
-	Save as WAV file: dir_onlyvoiced$ + fileName_onlyvoiced1$ + "_sent1.wav"
+	Save as WAV file: dir_onlyvoiced$ + fileName_onlyvoiced1$ + "_phrase1.wav"
 
 # Remove intermediate objects
 	select all
@@ -564,15 +564,15 @@ endfor
 
 		# Copy Praat picture
 		Select inner viewport... 0.5 7.5 0 7.4
-		Save as 600-dpi PNG file: dir_pictures$ + fileName_raw$ + "_sent2.png"
+		Save as 600-dpi PNG file: dir_pictures$ + fileName_raw$ + "_phrase2.png"
 
 		# Copy data to file
-		appendFileLine: resultdir$ + "/Measures_sent2.txt", fileName$, ",", fixed$ (cpps, 2), ",", fixed$ (slope, 2), ",", fixed$ (tilt, 2), ","
+		appendFileLine: resultdir$ + "/Measures_phrase2.txt", fileName$, ",", fixed$ (cpps, 2), ",", fixed$ (slope, 2), ",", fixed$ (tilt, 2), ","
 
 		# Save sound file with only voiced segments
 		select Sound cs
 		fileName_onlyvoiced2$ = fileName_raw$ + "_OnlyVoiced"
-		Save as WAV file: dir_onlyvoiced$ + fileName_onlyvoiced1$ + "_sent2.wav"
+		Save as WAV file: dir_onlyvoiced$ + fileName_onlyvoiced1$ + "_phrase2.wav"
 
 	endif
 
