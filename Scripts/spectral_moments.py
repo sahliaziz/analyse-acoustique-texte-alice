@@ -30,7 +30,7 @@ import pandas as pd
 from pydub import AudioSegment
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-PRAAT_SCRIPT = SCRIPT_DIR / "script_spectral_moments_python.praat"
+PRAAT_SCRIPT = SCRIPT_DIR / "calculate_spectral_moments.praat"
 PLOSIVE_FRAME_SIZE = 0.005
 FRICATIVE_FRAME_SIZE = 0.01
 PRAAT_LABEL_ORDER = (
