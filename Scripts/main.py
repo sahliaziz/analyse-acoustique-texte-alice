@@ -1,5 +1,6 @@
 import pandas as pd
 import requests
+import io
 from pathlib import Path
 from pydub import AudioSegment
 import spectral_moments
@@ -9,6 +10,7 @@ import subprocess
 import analysis.mesures_acoustiques as mesures
 import streamlit as st
 import unicodedata
+import zipfile
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -62,7 +64,19 @@ def process_audio(audio_file: Path) -> AudioSegment:
     return audio
 
 
-st.title("Analyse acoustique d'un enregistrement vocal")
+def zip_result_dir(result_dir: Path) -> bytes:
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        for file_path in result_dir.rglob("*"):
+            if file_path.is_file():
+                zip_file.write(file_path, file_path.relative_to(result_dir.parent))
+    return zip_buffer.getvalue()
+
+
+st.title('Extraction des mesures acoustiques sur une lecture à voix haute du texte standardisé "Le voyage d\'Alice"')
+
+if "analysis_started" not in st.session_state:
+    st.session_state.analysis_started = False
 
 audio_files = st.file_uploader(
     "Téléchargez un ou plusieurs fichiers audio au format .wav",
@@ -70,9 +84,24 @@ audio_files = st.file_uploader(
     accept_multiple_files=True,
 )
 
-speaker_gender = st.radio("Sélectionnez le genre du locuteur", options=["M", "F"])
+has_audio_files = bool(audio_files)
+controls_disabled = not has_audio_files or st.session_state.analysis_started
 
-if audio_files is not None:
+gender_selector = st.radio(
+    "Sélectionnez le genre du locuteur",
+    options=["Male", "Femelle"],
+    disabled=controls_disabled,
+)
+speaker_gender = "M" if gender_selector == "Male" else "F"
+
+if st.button(
+    "Démarrer l'analyse acoustique",
+    disabled=controls_disabled,
+):
+    st.session_state.analysis_started = True
+    st.rerun()
+
+if st.session_state.analysis_started and audio_files is not None:
     for audio_file in audio_files:
         st.divider()
 
@@ -99,8 +128,8 @@ if audio_files is not None:
         input_csv_path = (PROJECT_ROOT / "input_triangle_voc.csv").resolve()
         spectral_moments_output_path = file_result_dir / "spectralmoments.csv"
         formants_output_path = file_result_dir / "formants_glides.csv"
-        mesure_vocale1_path = file_result_dir / "Measures_sent1.txt"
-        mesure_vocale2_path = file_result_dir / "Measures_sent2.txt"
+        mesure_vocale1_path = file_result_dir / "Measures_phrase1.txt"
+        mesure_vocale2_path = file_result_dir / "Measures_phrase2.txt"
         voweltriangle_path = file_result_dir / "voweltriangle.txt"
 
         # Progress UI
@@ -194,13 +223,11 @@ if audio_files is not None:
             audio_file=processed_audio_path,
         )
 
-        st.divider()
-
         st.subheader("1) Mesures de qualité vocale")
         st.write("Analyses acoustiques de la première phrase")
-        st.image(file_result_dir / "pictures" / f"{output_stem}_sent1.png")
+        st.image(file_result_dir / "pictures" / f"{output_stem}_phrase1.png")
         st.write("Analyses acoustiques de la deuxième phrase")
-        st.image(file_result_dir / "pictures" / f"{output_stem}_sent2.png")
+        st.image(file_result_dir / "pictures" / f"{output_stem}_phrase2.png")
 
         st.subheader("2) Mesures vocaliques")
         st.write("Mesures vocaliques extraites de l'enregistrement")
@@ -232,6 +259,17 @@ if audio_files is not None:
 
         progress_text.markdown(f"**Traitement de {audio_file_path.name}**\n\nTerminé")
         progress_bar.progress(100)
+
+        progress_text.empty()
+        progress_bar.empty()
+
         st.write(
             "Analyse acoustique terminée. Résultats enregistrés dans le dossier 'result'."
+        )
+        st.download_button(
+            label="Télécharger les résultats",
+            data=zip_result_dir(file_result_dir),
+            file_name=f"{output_stem}_resultats.zip",
+            mime="application/zip",
+            on_click="ignore",
         )
