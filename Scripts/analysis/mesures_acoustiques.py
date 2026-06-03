@@ -279,9 +279,9 @@ def mesures_acoustiques_semivoyelles(path: Path) -> pd.DataFrame:
         rows,
         columns=[
             "Phonème",
-            "f1_slope",
-            "f2_slope",
-            "f3_slope",
+            "Pente F1",
+            "Pente F2",
+            "Pente F3",
         ],
     )
 
