@@ -25,7 +25,23 @@ def sanitize_filename(name: str) -> str:
     return ascii_only
 
 
-def forced_alignment(audio_file: Path, text_file: Path) -> str | None:
+def forced_alignment_MFA(audio_file: Path, transcript: Path, output_dir: Path) -> None:
+    cmd = [
+        "mfa",
+        "align_one",
+        "--output_format",
+        "long_textgrid",
+        audio_file,
+        transcript,
+        "alice",
+        "french_mfa",
+        output_dir,
+    ]
+    result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+    print(result.stdout)
+    print(result.stderr)
+
+def forced_alignment_MAUS(audio_file: Path, text_file: Path) -> str | None:
     url = "https://clarin.phonetik.uni-muenchen.de/BASWebServices/services/runMAUSBasic"
 
     files = {
@@ -142,21 +158,18 @@ if st.session_state.analysis_started and audio_files is not None:
             progress_text.markdown(f"**Traitement de {audio_file.name}**\n\n{message}")
             progress_bar.progress(int(step / total_steps * 100))
 
-        set_progress(1, "(1/9) Traitement de l'audio...")
+        set_progress(1, "Traitement de l'audio...")
         processed_audio = process_audio(audio_file_path)
         processed_audio.export(processed_audio_path, format="wav")
 
-        set_progress(2, "(2/9) Alignement forcé...")
-        textgrid_content = forced_alignment(processed_audio_path, fichier_texte)
+        set_progress(2, "Alignement forcé...")
+        forced_alignment_MFA(processed_audio_path, fichier_texte, PROJECT_ROOT)
 
-        if textgrid_content:
-            with open(tg_output_path, "w", encoding="utf-8") as f:
-                f.write(textgrid_content)
-
-        df_tg = traitement_textgrid.tier_to_df(tg_output_path, 2)
+        textgrid_content = tg_output_path.read_text()
+        df_tg = traitement_textgrid.tier_to_df(tg_output_path, 1)
         consonnes = traitement_textgrid.extract_consonants(df_tg)
 
-        set_progress(3, "(3/9) Extraction des mesures acoustiques...")
+        set_progress(3, "Extraction des mesures acoustiques...")
         subprocess.call(
             [
                 "praat",
@@ -172,7 +185,7 @@ if st.session_state.analysis_started and audio_files is not None:
         data = AudioSegment.from_wav(processed_audio_path).get_array_of_samples()
         order = 16
 
-        set_progress(4, "(4/9) Détection des frontières...")
+        set_progress(4, "Détection des frontières...")
         frontieres = diverg.segment(
             data, fe, ordre=order, with_backward=True
         )
@@ -184,7 +197,7 @@ if st.session_state.analysis_started and audio_files is not None:
 
         diverg_df.to_csv(diverg_output_path, index=False)
 
-        set_progress(5, "(5/9) Extraction des moments spectraux...")
+        set_progress(5, "Extraction des moments spectraux...")
         spectral_moments.extract_moments(
             consonnes, diverg_df, spectral_debug_path, processed_audio_path
         )
@@ -194,12 +207,12 @@ if st.session_state.analysis_started and audio_files is not None:
             f.write(
                 f"{output_stem};{speaker_gender};{processed_audio_path.name};FR;{voweltriangle_path.resolve()};{(file_result_dir / 'pictures' / (output_stem + '_plot.png')).resolve()}\n"
             )
-        set_progress(6, "(6/9) Création du triangle vocalique...")
+        set_progress(6, "Création du triangle vocalique...")
         subprocess.call(
             ["praat", "--run", SCRIPT_DIR / "10_VowelTriangle.praat", input_csv_path]
         )
 
-        set_progress(7, "(7/9) Extraction des formants pour les glides...")
+        set_progress(7, "Extraction des formants pour les glides...")
         subprocess.call(
             [
                 "praat",
@@ -211,10 +224,10 @@ if st.session_state.analysis_started and audio_files is not None:
             ]
         )
 
-        set_progress(8, "(8/9) Extraction des mesures vocales...")
+        set_progress(8, "Extraction des mesures vocales...")
         f0_df = mesures.measure_pitch(processed_audio_path)
 
-        set_progress(9, "(9/9) Compilation des mesures acoustiques...")
+        set_progress(9, "Compilation des mesures acoustiques...")
         mesures_df = mesures.mesures_acoustiques(
             qualite_vocale=mesure_vocale1_path,
             voweltriangle_path=voweltriangle_path,
@@ -223,53 +236,52 @@ if st.session_state.analysis_started and audio_files is not None:
             audio_file=processed_audio_path,
         )
 
-        st.subheader("1) Mesures de qualité vocale")
-        st.write("Analyses acoustiques de la première phrase")
-        st.image(file_result_dir / "pictures" / f"{output_stem}_phrase1.png")
-        st.write("Analyses acoustiques de la deuxième phrase")
-        st.image(file_result_dir / "pictures" / f"{output_stem}_phrase2.png")
+        with st.expander(f"Résultats pour {audio_file.name}", expanded=True):
 
-        st.subheader("2) Mesures vocaliques")
-        st.write("Mesures vocaliques extraites de l'enregistrement")
-        st.write(mesures_df)
-        st.write("Triangle vocalique")
-        st.image(file_result_dir / "pictures" / f"{output_stem}_plot.png")
+            st.subheader("1) Mesures de qualité vocale")
+            st.write("Analyses acoustiques de la première phrase")
+            st.image(file_result_dir / "pictures" / f"{output_stem}_phrase1.png")
+            st.write("Analyses acoustiques de la deuxième phrase")
+            st.image(file_result_dir / "pictures" / f"{output_stem}_phrase2.png")
 
-        st.subheader("3) Mesures consonantiques")
-        mesures_cons_df = mesures.mesures_acoustiques_consonnes(
-            spectral_moments_output_path
-        )
-        st.write("Mesures consonantiques extraites de l'enregistrement")
-        st.write(mesures_cons_df)
+            st.subheader("2) Mesures vocaliques")
+            st.write("Mesures vocaliques extraites de l'enregistrement")
+            st.write(mesures_df)
+            st.write("Triangle vocalique")
+            st.image(file_result_dir / "pictures" / f"{output_stem}_plot.png")
 
-        st.subheader("4) Mesure semi-consonantique")
-        mesures_semivoyelles_df = mesures.mesures_acoustiques_semivoyelles(
-            formants_output_path
-        )
-        st.write("Mesures semi-voyelles extraites de l'enregistrement")
-        st.write(mesures_semivoyelles_df)
+            st.subheader("3) Mesures consonantiques")
+            mesures_cons_df = mesures.mesures_acoustiques_consonnes(
+                spectral_moments_output_path
+            )
+            st.write("Mesures consonantiques extraites de l'enregistrement")
+            st.write(mesures_cons_df)
 
-        mesures_df.to_csv(file_result_dir / "mesures_acoustiques.csv", index=False)
-        mesures_cons_df.to_csv(
-            file_result_dir / "mesures_acoustiques_consonnes.csv", index=False
-        )
-        mesures_semivoyelles_df.to_csv(
-            file_result_dir / "mesures_acoustiques_semivoyelles.csv", index=False
-        )
+            st.subheader("4) Mesure semi-consonantique")
+            mesures_semivoyelles_df = mesures.mesures_acoustiques_semivoyelles(
+                formants_output_path
+            )
+            st.write("Mesures semi-voyelles extraites de l'enregistrement")
+            st.write(mesures_semivoyelles_df)
 
-        progress_text.markdown(f"**Traitement de {audio_file_path.name}**\n\nTerminé")
-        progress_bar.progress(100)
+            mesures_df.to_csv(file_result_dir / "mesures_acoustiques.csv", index=False)
+            mesures_cons_df.to_csv(
+                file_result_dir / "mesures_acoustiques_consonnes.csv", index=False
+            )
+            mesures_semivoyelles_df.to_csv(
+                file_result_dir / "mesures_acoustiques_semivoyelles.csv", index=False
+            )
 
-        progress_text.empty()
-        progress_bar.empty()
+            progress_text.markdown(f"**Traitement de {audio_file_path.name}**\n\nTerminé")
+            progress_bar.progress(100)
 
-        st.write(
-            "Analyse acoustique terminée. Résultats enregistrés dans le dossier 'result'."
-        )
-        st.download_button(
-            label="Télécharger les résultats",
-            data=zip_result_dir(file_result_dir),
-            file_name=f"{output_stem}_resultats.zip",
-            mime="application/zip",
-            on_click="ignore",
-        )
+            progress_text.empty()
+            progress_bar.empty()
+
+            st.download_button(
+                label="Télécharger les résultats",
+                data=zip_result_dir(file_result_dir),
+                file_name=f"{output_stem}_resultats.zip",
+                mime="application/zip",
+                on_click="ignore",
+            )
