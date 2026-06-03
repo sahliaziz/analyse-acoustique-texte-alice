@@ -8,8 +8,6 @@ form Variables
     sentence outputfile formant_trans_glides.csv
 endform
 
-tier = 3
-glides$ = "wHj"
 intervalHead$ = "interval "
 cols$ = intervalHead$ + "tbeg tend f1_beg f1_end f2_beg f2_end f3_beg f3_end f1_slope f2_slope f3_slope"
 
@@ -18,6 +16,14 @@ sound = Read from file: wavfile$
 textgrid = Read from file: textgridfile$
 
 selectObject: textgrid
+numberOfTiers = Get number of tiers
+if numberOfTiers == 2
+    tier = 2
+    glides$ = "wɥj"
+else
+    tier = 3
+    glides$ = "wHj"
+endif
 numberOfIntervals = Get number of intervals: tier
 
 row = 1
@@ -27,7 +33,7 @@ for interval from 1 to numberOfIntervals
     glidebeg = Get start time of interval: tier, interval
     glideend = Get end time of interval: tier, interval
 
-    if index(glides$, int$)
+    if int$ <> "" and index(glides$, int$)
         selectObject: sound
         soundPart = Extract part: glidebeg, glideend, "rectangular", 1, "yes"
         formant = To Formant (burg): 0, 5, 5500, 0.005, 50

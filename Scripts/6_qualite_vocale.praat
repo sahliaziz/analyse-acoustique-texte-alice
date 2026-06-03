@@ -26,6 +26,9 @@ fileName_raw$ = replace_regex$(fileName$, "(?i)\.wav$", "", 0)
 Read from file: textgridfile$
 numberOfIntervals = Get number of intervals... tier
 
+end_first_half_text = numberOfIntervals
+beg_second_half_text = 0
+
 notempty = Count intervals where... 1 "is not equal to"
 for interval from 1 to numberOfIntervals
 	int$ = ""
@@ -308,7 +311,7 @@ endfor
 
 #SECOND SENTENCE
 
-	if notempty == 232
+	if beg_second_half_text > 0
 
 		# Default values for variables
 		Read from file: textgridfile$

@@ -24,7 +24,7 @@ def tier_to_df(textgrid_path : Path, tier_index : int) -> pd.DataFrame:
 
 
 def extract_consonants(df : pd.DataFrame) -> pd.DataFrame:
-    consonants = ("p", "t", "k", "b", "d", "g", "f", "s", "S", "v", "z", "Z")
+    consonants = ("p", "t", "k", "b", "d", "g", "ɡ", "f", "s", "s", "ʃ", "S", "v", "z", "Z", "ʒ")
     consonants_df = pd.DataFrame(columns=["tmin", "text", "tmax"])
     length = len(df) - 2
     if length >= 658:
@@ -39,18 +39,18 @@ def extract_consonants(df : pd.DataFrame) -> pd.DataFrame:
                     (text_before == "a" and text_after == "a")
                     or (
                         text_bebefore == "a"
-                        and text_before == "<p:>"
-                        and text_after == "<p:>"
+                        and text_before in ("<p:>", "sil")
+                        and text_after in ("<p:>", "sil")
                         and text_afterter == "a"
                     )
                     or (
                         text_bebefore == "a"
-                        and text_before == "<p:>"
+                        and text_before in ("<p:>", "sil")
                         and text_after == "a"
                     )
                     or (
                         text_before == "a"
-                        and text_after == "<p:>"
+                        and text_after in ("<p:>", "sil")
                         and text_afterter == "a"
                     )
                 ):
