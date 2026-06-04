@@ -7,7 +7,7 @@ import spectral_moments
 import traitement_textgrid
 import diverg_opt as diverg
 import subprocess
-import analysis.mesures_acoustiques as mesures
+import mesures_acoustiques as mesures
 import streamlit as st
 import unicodedata
 import zipfile
@@ -239,15 +239,15 @@ if st.session_state.analysis_started and audio_files is not None:
         with st.expander(f"Résultats pour {audio_file.name}", expanded=True):
 
             st.subheader("1) Mesures de qualité vocale")
-            st.write("Analyses acoustiques de la première phrase")
+            st.write("a. Analyses acoustiques de la première phrase")
             st.image(file_result_dir / "pictures" / f"{output_stem}_phrase1.png")
-            st.write("Analyses acoustiques de la deuxième phrase")
+            st.write("b. Analyses acoustiques de la deuxième phrase")
             st.image(file_result_dir / "pictures" / f"{output_stem}_phrase2.png")
 
             st.subheader("2) Mesures vocaliques")
-            st.write("Mesures vocaliques extraites de l'enregistrement")
+            st.write("a. Mesures vocaliques extraites de l'enregistrement")
             st.write(mesures_df)
-            st.write("Triangle vocalique")
+            st.write("b. Triangle vocalique")
             st.image(file_result_dir / "pictures" / f"{output_stem}_plot.png")
 
             st.subheader("3) Mesures consonantiques")
