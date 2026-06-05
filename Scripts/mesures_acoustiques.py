@@ -179,10 +179,10 @@ def vocal_quality_analysis(path: Path | str) -> pd.DataFrame:
     df = pd.read_csv(path, header=None)
 
     return pd.DataFrame({
-        "fichier":    df.iloc[:, 0],
-        "cpps":       df.iloc[:, 1],
-        "slope":      df.iloc[:, 2],
-        "tilt":       df.iloc[:, 3],
+        "Fichier":    df.iloc[:, 0],
+        "CPPs":       df.iloc[:, 1],
+        "Pente":      df.iloc[:, 2],
+        "Tilt":       df.iloc[:, 3],
     })
 
 
@@ -242,6 +242,7 @@ def mesures_acoustiques_semivoyelles(path: Path) -> pd.DataFrame:
 
     rows = [
         [
+            row["fichier"],
             row["interval"],
             float(row["f1_slope"]),
             float(row["f2_slope"]),
@@ -253,6 +254,7 @@ def mesures_acoustiques_semivoyelles(path: Path) -> pd.DataFrame:
     return pd.DataFrame(
         rows,
         columns=[
+            "Fichier",
             "Phonème",
             "Pente F1",
             "Pente F2",
@@ -293,11 +295,11 @@ def mesures_acoustiques(
     df_vt = vowel_analysis(voweltriangle_path)
 
     df = df_vq.copy()
-    df["aire triangle s_2"] = df_vt["Area2"].values
-    df["mean F0"] = pitch_mean(f0_df)
-    df["std F0"] = pitch_std(f0_df)
-    df["speech rate"] = speech_rate(audio_file, tg_content)
-    df["articulation rate"] = articulation_rate(audio_file, tg_content)
-    df["mean silence duration"] = mean_silence_file(audio_file)
+    df["Aire triangle s2"] = df_vt["Area2"].values
+    df["Moyenne F0"] = pitch_mean(f0_df)
+    df["Ecart-type F0"] = pitch_std(f0_df)
+    df["Débit de parole"] = speech_rate(audio_file, tg_content)
+    df["Vitesse articulation"] = articulation_rate(audio_file, tg_content)
+    df["Durée moyenne des silences"] = mean_silence_file(audio_file)
 
     return df
