@@ -1,4 +1,5 @@
 import pandas as pd
+import plotly.express as px
 import requests
 import io
 from pathlib import Path
@@ -19,47 +20,47 @@ RESULT_DIR = PROJECT_ROOT / "result"
 RESULT_DIR.mkdir(exist_ok=True)
 
 
-def sanitize_filename(name: str) -> str:
-    normalized = unicodedata.normalize("NFD", name)
-    ascii_only = normalized.encode("ascii", errors="ignore").decode("ascii")
-    return ascii_only
+# =====================================================
+# SESSION STATE
+# =====================================================
+
+if "processed_files" not in st.session_state:
+    st.session_state.processed_files = set()
+
+if "file_results" not in st.session_state:
+    st.session_state.file_results = {}
+
+if "all_mesures_df" not in st.session_state:
+    st.session_state.all_mesures_df = pd.DataFrame()
+
+if "all_mesures_cons_df" not in st.session_state:
+    st.session_state.all_mesures_cons_df = pd.DataFrame()
+
+if "all_mesures_semivoyelles_df" not in st.session_state:
+    st.session_state.all_mesures_semivoyelles_df = pd.DataFrame()
+
+if "analysis_started" not in st.session_state:
+    st.session_state.analysis_started = False
 
 
-def forced_alignment_MFA(audio_file: Path, transcript: Path, output_dir: Path) -> None:
-    cmd = [
-        "mfa",
-        "align_one",
-        "--output_format",
-        "long_textgrid",
-        audio_file,
-        transcript,
-        "alice",
-        "french_mfa",
-        output_dir,
-    ]
-    result = subprocess.run(cmd, check=True, capture_output=True, text=True)
-    print(result.stdout)
-    print(result.stderr)
+# =====================================================
+# FUNCTIONS
+# =====================================================
 
 def forced_alignment_MAUS(audio_file: Path, text_file: Path) -> str | None:
     url = "https://clarin.phonetik.uni-muenchen.de/BASWebServices/services/runMAUSBasic"
-
     files = {
         "SIGNAL": open(audio_file, "rb"),
         "TEXT": open(text_file, "rb"),
     }
-
     data = {
         "LANGUAGE": "fra-FR",
         "OUTFORMAT": "TextGrid",
     }
-
     response = requests.post(url, files=files, data=data)
-
     if response.status_code != 200:
         print(f"Erreur lors de l'alignement forcé: {response.text}")
         return None
-
     if "<success>true</success>" in response.text:
         download_url = response.text.split("<downloadLink>")[1].split(
             "</downloadLink>"
@@ -72,6 +73,27 @@ def forced_alignment_MAUS(audio_file: Path, text_file: Path) -> str | None:
                 f"Erreur lors du téléchargement du TextGrid: {textgrid_response.text}"
             )
             return None
+        
+
+def forced_alignment_MFA(audio_file: Path, transcript: Path, output_dir: Path) -> None:
+    cmd = [
+        "mfa",
+        "align_one",
+        "--output_format",
+        "long_textgrid",
+        audio_file,
+        transcript,
+        "alice",
+        "french_mfa",
+        output_dir
+    ]
+    subprocess.run(cmd, check=True)
+
+
+def sanitize_filename(name: str) -> str:
+    normalized = unicodedata.normalize("NFD", name)
+    ascii_only = normalized.encode("ascii", errors="ignore").decode("ascii")
+    return ascii_only
 
 
 def process_audio(audio_file: Path) -> AudioSegment:
@@ -82,33 +104,52 @@ def process_audio(audio_file: Path) -> AudioSegment:
 
 def zip_result_dir(result_dir: Path) -> bytes:
     zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+
+    with zipfile.ZipFile(
+        zip_buffer,
+        "w",
+        zipfile.ZIP_DEFLATED,
+    ) as zip_file:
         for file_path in result_dir.rglob("*"):
             if file_path.is_file():
-                zip_file.write(file_path, file_path.relative_to(result_dir.parent))
+                zip_file.write(
+                    file_path,
+                    file_path.relative_to(result_dir.parent),
+                )
+
     return zip_buffer.getvalue()
 
 
-st.title('Extraction des mesures acoustiques sur une lecture à voix haute du texte standardisé "Le voyage d\'Alice"')
+# =====================================================
+# UI
+# =====================================================
 
-if "analysis_started" not in st.session_state:
-    st.session_state.analysis_started = False
+st.title(
+    "Extraction des mesures acoustiques sur une lecture "
+    "à voix haute du texte standardisé "
+    '"Le voyage d\'Alice"'
+)
 
 audio_files = st.file_uploader(
-    "Téléchargez un ou plusieurs fichiers audio au format .wav",
+    "Téléchargez un ou plusieurs fichiers audio",
     type=["wav"],
     accept_multiple_files=True,
 )
 
-has_audio_files = bool(audio_files)
-controls_disabled = not has_audio_files or st.session_state.analysis_started
+controls_disabled = not audio_files or st.session_state.analysis_started
 
 gender_selector = st.radio(
     "Sélectionnez le genre du locuteur",
     options=["Male", "Femelle"],
     disabled=controls_disabled,
 )
+
 speaker_gender = "M" if gender_selector == "Male" else "F"
+
+
+# =====================================================
+# START ANALYSIS
+# =====================================================
 
 if st.button(
     "Démarrer l'analyse acoustique",
@@ -117,11 +158,35 @@ if st.button(
     st.session_state.analysis_started = True
     st.rerun()
 
-if st.session_state.analysis_started and audio_files is not None:
-    for audio_file in audio_files:
-        st.divider()
+st.divider()
 
+# =====================================================
+# PROCESS FILES ONLY ONCE
+# =====================================================
+
+if st.session_state.analysis_started and audio_files:
+    for audio_file in audio_files:
         audio_file.name = sanitize_filename(audio_file.name)
+
+        # -------------------------------------
+        # already processed
+        # -------------------------------------
+
+        if audio_file.name in st.session_state.processed_files:
+            continue
+
+        total_steps = 9
+        progress_text = st.empty()
+        progress_text.markdown(f"**Traitement de {audio_file.name}**")
+        progress_bar = st.progress(0)
+
+        def set_progress(step: int, message: str) -> None:
+            progress_text.markdown(f"**Traitement de {audio_file.name}**\n\n{message}")
+            progress_bar.progress(int(step / total_steps * 100))
+
+        # -------------------------------------
+        # SAVE FILE
+        # -------------------------------------
 
         audio_file_path = PROJECT_ROOT / audio_file.name
         with open(audio_file_path, "wb") as f:
@@ -148,16 +213,7 @@ if st.session_state.analysis_started and audio_files is not None:
         mesure_vocale2_path = file_result_dir / "Measures_phrase2.txt"
         voweltriangle_path = file_result_dir / "voweltriangle.txt"
 
-        # Progress UI
-        total_steps = 9
-        progress_text = st.empty()
-        progress_text.markdown(f"**Traitement de {audio_file.name}**")
-        progress_bar = st.progress(0)
-
-        def set_progress(step: int, message: str) -> None:
-            progress_text.markdown(f"**Traitement de {audio_file.name}**\n\n{message}")
-            progress_bar.progress(int(step / total_steps * 100))
-
+        
         set_progress(1, "Traitement de l'audio...")
         processed_audio = process_audio(audio_file_path)
         processed_audio.export(processed_audio_path, format="wav")
@@ -198,9 +254,13 @@ if st.session_state.analysis_started and audio_files is not None:
         diverg_df.to_csv(diverg_output_path, index=False)
 
         set_progress(5, "Extraction des moments spectraux...")
-        spectral_moments.extract_moments(
-            consonnes, diverg_df, spectral_debug_path, processed_audio_path
-        )
+        try:
+            spectral_moments.extract_moments(
+                consonnes, diverg_df, spectral_debug_path, processed_audio_path
+            )
+        except KeyError:
+            st.error(f"Erreur lors de l'extraction des moments spectraux, assurez vous que le texte lu correspond bien au texte standardisé.")
+            continue
 
         with open(input_csv_path, "w") as f:
             f.write("Title;Speaker;File;Language;Log;Plotfile\n")
@@ -235,53 +295,146 @@ if st.session_state.analysis_started and audio_files is not None:
             tg_content=textgrid_content,  # type: ignore
             audio_file=processed_audio_path,
         )
+        mesures_cons_df = mesures.mesures_acoustiques_consonnes(
+                spectral_moments_output_path
+        )
+        mesures_semivoyelles_df = mesures.mesures_acoustiques_semivoyelles(
+                formants_output_path
+        )
 
-        with st.expander(f"Résultats pour {audio_file.name}", expanded=True):
+        mesures_df.to_csv(file_result_dir / "mesures_acoustiques.csv", index=False)
+        mesures_cons_df.to_csv(
+            file_result_dir / "mesures_acoustiques_consonnes.csv", index=False
+        )
+        mesures_semivoyelles_df.to_csv(
+            file_result_dir / "mesures_acoustiques_semivoyelles.csv", index=False
+        )
 
+        # -------------------------------------------------
+        # SAVE GLOBAL DATA
+        # -------------------------------------------------
+
+        st.session_state.all_mesures_df = pd.concat(
+            [
+                st.session_state.all_mesures_df,
+                mesures_df,
+            ],
+            ignore_index=True,
+        )
+
+        st.session_state.all_mesures_cons_df = pd.concat(
+            [
+                st.session_state.all_mesures_cons_df,
+                mesures_cons_df,
+            ],
+            ignore_index=True,
+        )
+
+        st.session_state.all_mesures_semivoyelles_df = pd.concat(
+            [
+                st.session_state.all_mesures_semivoyelles_df,
+                mesures_semivoyelles_df,
+            ],
+            ignore_index=True,
+        )
+
+        # -------------------------------------------------
+        # SAVE FILE RESULTS
+        # -------------------------------------------------
+
+        st.session_state.file_results[audio_file.name] = {
+            "output_stem": output_stem,
+            "mesures_df": mesures_df,
+            "mesures_cons_df": mesures_cons_df,
+            "mesures_semivoyelles_df": mesures_semivoyelles_df,
+            "phrase1_img": file_result_dir / "pictures" / f"{output_stem}_phrase1.png",
+            "phrase2_img": file_result_dir / "pictures" / f"{output_stem}_phrase2.png",
+            "triangle_img": file_result_dir / "pictures" / f"{output_stem}_plot.png",
+            "zip_data": zip_result_dir(file_result_dir),
+        }
+
+        st.session_state.processed_files.add(audio_file.name)
+
+        progress_text.empty()
+        progress_bar.empty()
+
+
+# =====================================================
+# DISPLAY RESULTS
+# =====================================================
+
+if st.session_state.file_results:
+    st.header("Résultats")
+
+    for (
+        filename,
+        result,
+    ) in st.session_state.file_results.items():
+        with st.expander(
+            f"Résultats pour {filename}",
+            expanded=True,
+        ):
             st.subheader("1) Mesures de qualité vocale")
-            st.write("a. Analyses acoustiques de la première phrase")
-            st.image(file_result_dir / "pictures" / f"{output_stem}_phrase1.png")
-            st.write("b. Analyses acoustiques de la deuxième phrase")
-            st.image(file_result_dir / "pictures" / f"{output_stem}_phrase2.png")
+
+            st.image(result["phrase1_img"])
+
+            st.image(result["phrase2_img"])
 
             st.subheader("2) Mesures vocaliques")
-            st.write("a. Mesures vocaliques extraites de l'enregistrement")
-            st.write(mesures_df)
-            st.write("b. Triangle vocalique")
-            st.image(file_result_dir / "pictures" / f"{output_stem}_plot.png")
+
+            st.write(result["mesures_df"].drop(columns=["Fichier"]))
+
+            st.image(result["triangle_img"])
 
             st.subheader("3) Mesures consonantiques")
-            mesures_cons_df = mesures.mesures_acoustiques_consonnes(
-                spectral_moments_output_path
-            )
-            st.write("Mesures consonantiques extraites de l'enregistrement")
-            st.write(mesures_cons_df)
 
-            st.subheader("4) Mesure semi-consonantique")
-            mesures_semivoyelles_df = mesures.mesures_acoustiques_semivoyelles(
-                formants_output_path
-            )
-            st.write("Mesures semi-voyelles extraites de l'enregistrement")
-            st.write(mesures_semivoyelles_df)
+            st.write(result["mesures_cons_df"].drop(columns=["Fichier"]))
 
-            mesures_df.to_csv(file_result_dir / "mesures_acoustiques.csv", index=False)
-            mesures_cons_df.to_csv(
-                file_result_dir / "mesures_acoustiques_consonnes.csv", index=False
-            )
-            mesures_semivoyelles_df.to_csv(
-                file_result_dir / "mesures_acoustiques_semivoyelles.csv", index=False
-            )
+            st.subheader("4) Mesures semi-consonantiques")
 
-            progress_text.markdown(f"**Traitement de {audio_file_path.name}**\n\nTerminé")
-            progress_bar.progress(100)
-
-            progress_text.empty()
-            progress_bar.empty()
-
+            st.write(result["mesures_semivoyelles_df"].drop(columns=["Fichier"]))
             st.download_button(
-                label="Télécharger les résultats",
-                data=zip_result_dir(file_result_dir),
-                file_name=f"{output_stem}_resultats.zip",
+                "Télécharger les résultats",
+                data=result["zip_data"],
+                file_name=(f"{result['output_stem']}_resultats.zip"),
                 mime="application/zip",
                 on_click="ignore",
             )
+
+
+# =====================================================
+# COMPARISON SECTION
+# =====================================================
+
+if not st.session_state.all_mesures_df.empty:
+    all_mesures_df = st.session_state.all_mesures_df
+    all_mesures_cons_df = st.session_state.all_mesures_cons_df
+    all_mesures_semivoyelles_df = st.session_state.all_mesures_semivoyelles_df
+
+    with st.expander(
+        "Comparer les enregistrements",
+        expanded=True,
+    ):
+        
+        category = st.selectbox(
+            "Sélectionnez une catégorie de mesures à comparer",
+            options=["Mesures vocales", "Mesures consonantiques"],
+        )
+
+        if category == "Mesures vocales":
+            selection = st.selectbox(
+                "Sélectionnez une mesure à comparer",
+                options=st.session_state.all_mesures_df.drop(columns=["Fichier"]).columns
+            )
+            print(all_mesures_df.columns)
+            print(f"Type for {selection}: {all_mesures_df[selection].dtype}")
+            st.bar_chart(all_mesures_df.set_index("Fichier")[selection])
+
+        elif category == "Mesures consonantiques":
+            selection = st.selectbox(
+                "Sélectionnez une mesure à comparer",
+                options=st.session_state.all_mesures_cons_df.drop(columns=["Fichier", "Phonème"]).columns
+            )
+            if selection in all_mesures_cons_df.columns:
+                fig = px.bar(all_mesures_cons_df, x="Fichier", y=selection, color="Phonème", barmode="group")
+                st.plotly_chart(fig)
