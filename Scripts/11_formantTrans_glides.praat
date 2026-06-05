@@ -8,8 +8,9 @@ form Variables
     sentence outputfile formant_trans_glides.csv
 endform
 
+wavfile_base$ = replace_regex$(wavfile$, ".*[/\\]", "", 0)
 intervalHead$ = "interval "
-cols$ = intervalHead$ + "tbeg tend f1_beg f1_end f2_beg f2_end f3_beg f3_end f1_slope f2_slope f3_slope"
+cols$ = intervalHead$ + "fichier tbeg tend f1_beg f1_end f2_beg f2_end f3_beg f3_end f1_slope f2_slope f3_slope"
 
 formantsTable = Create Table with column names: "formants", 0, cols$
 sound = Read from file: wavfile$
@@ -94,6 +95,7 @@ for interval from 1 to numberOfIntervals
 
             selectObject: formantsTable
             Append row
+            Set string value: row, "fichier", wavfile_base$
             Set string value: row, "interval", int$
             Set numeric value: row, "tbeg", tbeg
             Set numeric value: row, "tend", tend
