@@ -124,11 +124,103 @@ def zip_result_dir(result_dir: Path) -> bytes:
 # UI
 # =====================================================
 
-st.title(
-    "Extraction des mesures acoustiques sur une lecture "
-    "à voix haute du texte standardisé "
-    '"Le voyage d\'Alice"'
-)
+st.title('"Le voyage d\'Alice" — Extraction de mesures acoustiques"')
+
+with st.expander("À propos du projet", expanded=False):
+    st.markdown("""
+**"Le voyage d'Alice"** est un texte standardisé créé pour l'évaluation de la parole et de la voix en français.
+Il permet d'analyser :
+
+- **L'articulation** des sons de la parole (dysarthrie, apraxie)
+- Les **variations prosodiques** et le **comportement phonatoire** (dysphonie, harmonisation vocale)
+- La **fluence / disfluences** (bégaiement, bredouillement)
+
+chez les locuteurs âgés d'au moins 12 ans.
+
+Ce pipeline automatise l'extraction de **mesures acoustiques** à partir d'un enregistrement audio de la lecture
+de ce texte. Les mesures sont organisées en **quatre catégories** :
+
+---
+
+##### 1) Mesures de qualité vocale
+Extraites sur la phrase voisée : *« mais la brise légère et l'air iodé de la mer les ravivent »*
+
+- **CPPs** (Cepstral Peak Prominence Smoothed) — Proéminence du pic cepstral lissé. Plus le pic est prononcé,
+plus le spectre est périodique (voix saine). Une voix dysphonique donne un pic moins discernable.
+- **Pente** (LTAS slope) — Pente du spectre moyen à long terme (rapport d'énergie basses / hautes fréquences).
+Une pente accentuée peut indiquer une voix soufflée ou hypofonctionnelle.
+- **Tilt** (LTAS tilt) — Inclinaison de la droite de régression à travers le LTAS (différence d'énergie 0-1 kHz vs 1-10 kHz).
+
+---
+
+##### 2) Mesures vocaliques
+- Extraction des **deux premiers formants (F1, F2)** des voyelles cardinales.
+- Tracage du **triangle vocalique** et calcul de son **aire** relative à un triangle de référence (VSA).
+Le VSA est sensible aux différences d'intelligibilité et permet de détecter une centralisation des voyelles.
+
+---
+
+##### 3) Mesures consonantiques
+Calcul des **quatre moments spectraux** sur les consonnes en contexte /aCa/ :
+
+- **CoG** (Center of Gravity, en Hz) — Fréquence qui divise le spectre en deux moitiés d'énergie égale.
+- **SD** (Standard Deviation, en Hz) — Dispersion du noyau spectral autour du CoG.
+- **SKEW** (Skewness) — Asymétrie de la distribution spectrale. Valeur positive = inclinaison négative
+(concentration dans les basses fréquences).
+- **Kurtosis** — Acuité du pic spectral. Plus la valeur est élevée, plus le pic est défini.
+
+---
+
+##### 4) Mesures semi-consonantiques
+- Pente des **trois premiers formants (F1, F2, F3)** dans les semi-consonnes.
+La pente de F2 est un indicateur de la **vitesse des mouvements articulatoires** ;
+un ralentissement peut réduire l'intelligibilité.
+
+---
+
+##### 5) Autres mesures
+- **F0 moyenne** et **écart-type** — Fréquence fondamentale moyenne et sa variabilité.
+- **Débit de parole** — Nombre de syllabes par seconde (temps de parole total).
+- **Vitesse d'articulation** — Nombre de syllabes par seconde (phonation seule, sans les silences).
+- **Durée moyenne des silences** — Pause moyenne entre les segments de parole.
+
+""")
+    
+with st.expander("Le texte standardisé", expanded=False):
+    st.markdown(
+        "**Texte standardisé « Le voyage d'Alice » :** \n"
+        "> Lundi matin, Alice et son Papa vont à Malibou.  \n"
+        "> Là-bas, ils rejoignent Papy après un voyage sans soucis.  \n"
+        "> Il fait chaud, mais la brise légère et l'air iodé de la mer les ravivent.  \n"
+        "> Vers midi, Alice s'exclame :  \n"
+        "> J'ai vraiment très très faim !  \n"
+        "> Papy les guide alors vite vers un café luxueux au bord de l'eau :  \n"
+        "> Le Bigorneau Salé.  \n"
+        "> Mardi, ils vont à la plage.  \n"
+        "> Il n'y a pas un nuage dans le ciel.  \n"
+        "> Papa s'interroge :  \n"
+        "> Avons-nous pris la crème solaire ?  \n"
+        "> Bien sûr !  \n"
+        "> répond Alice.  \n"
+        "> Mercredi, Papa et Papy se baladent en bavardant.  \n"
+        "> Pendant ce temps, Alice se détend en lisant un roman et mange un bonbon à l'ananas.  \n"
+        "> Jeudi, elle va faire un jogging.  \n"
+        "> Papa lui crie :  \n"
+        "> Nous partons faire quelques achats !  \n"
+        "> Au magasin, Papy achète des noix de macadamia.  \n"
+        "> Vendredi, ils visitent un musée d'art abstrait.  \n"
+        "> Papa s'extasie devant un splendide tableau et demande :  \n"
+        "> Qui a donc créé cette œuvre ?  \n"
+        "> Samedi matin, Alice s'entraîne pour la soirée karaoké en répétant rapidement :  \n"
+        "> pataka pataka pataka ».  \n"
+        "> Samedi soir, ils fêtent leur départ en dansant la java sous le lilas.  \n"
+        "> Comme à l'arrivée, il fait chaud, mais la brise légère et l'air iodé de la mer les ravivent.  \n"
+        "> Dimanche, Alice, Papa et Papy quittent Malibou.  \n"
+        "> Ils rentrent affamés.  \n"
+        "> À table, il y a de la pizza garnie et des lasagnes aux champignons.  \n"
+        "> Rassasiés, ils s'exclament  \n"
+        "> Quel séjour extraordinaire !"
+    )
 
 audio_files = st.file_uploader(
     "Téléchargez un ou plusieurs fichiers audio",
@@ -230,7 +322,7 @@ if st.session_state.analysis_started and audio_files:
             [
                 "praat",
                 "--run",
-                SCRIPT_DIR / "6_qualite_vocale.praat",
+                SCRIPT_DIR / "qualite_vocale.praat",
                 file_result_dir,
                 processed_audio_path,
                 tg_output_path,
@@ -269,7 +361,7 @@ if st.session_state.analysis_started and audio_files:
             )
         set_progress(6, "Création du triangle vocalique...")
         subprocess.call(
-            ["praat", "--run", SCRIPT_DIR / "10_VowelTriangle.praat", input_csv_path]
+            ["praat", "--run", SCRIPT_DIR / "vowel_triangle.praat", input_csv_path]
         )
 
         set_progress(7, "Extraction des formants pour les glides...")
@@ -277,7 +369,7 @@ if st.session_state.analysis_started and audio_files:
             [
                 "praat",
                 "--run",
-                SCRIPT_DIR / "11_formantTrans_glides.praat",
+                SCRIPT_DIR / "formantTrans_glides.praat",
                 processed_audio_path,
                 tg_output_path,
                 formants_output_path,
@@ -426,8 +518,6 @@ if not st.session_state.all_mesures_df.empty:
                 "Sélectionnez une mesure à comparer",
                 options=st.session_state.all_mesures_df.drop(columns=["Fichier"]).columns
             )
-            print(all_mesures_df.columns)
-            print(f"Type for {selection}: {all_mesures_df[selection].dtype}")
             st.bar_chart(all_mesures_df.set_index("Fichier")[selection])
 
         elif category == "Mesures consonantiques":
