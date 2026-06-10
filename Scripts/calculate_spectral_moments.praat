@@ -72,7 +72,7 @@ clearinfo
 csv_sep$ = ","
 
 result_file$ = resdir$ + "spectralmoments.csv"
-writeFileLine: result_file$, "fichier", csv_sep$, "phoneme", csv_sep$, "cog", csv_sep$, "sd", csv_sep$, "skew", csv_sep$, "kurt", csv_sep$
+writeFileLine: result_file$, "fichier", csv_sep$, "phoneme", csv_sep$, "cog", csv_sep$, "sd", csv_sep$, "skew", csv_sep$, "kurt"
 
 Read from file... 'wavdir$'/'id$'.wav
 filename$ = id$ + ".wav"
@@ -86,7 +86,7 @@ if p1_str$ == "p"
 	tx = mom_win_p1
 	ty = mom_win_p1 + windowF_plos
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "p1", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "p1", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_p1.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -98,7 +98,7 @@ if p2_str$ == "p"
 	tx = mom_win_p2
 	ty = mom_win_p2 + windowF_plos
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "p2", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "p2", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_p2.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -110,7 +110,7 @@ if p3_str$ == "p"
 	tx = mom_win_p3
 	ty = mom_win_p3 + windowF_plos
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "p3", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "p3", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_p3.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -122,7 +122,7 @@ if p4_str$ == "p"
 	tx = mom_win_p4
 	ty = mom_win_p4 + windowF_plos
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "p4", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "p4", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_p4.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -134,7 +134,7 @@ if p5_str$ == "p"
 	tx = mom_win_p5
 	ty = mom_win_p5 + windowF_plos
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "p5", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "p5", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_p5.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -146,7 +146,7 @@ if p6_str$ == "p"
 	tx = mom_win_p6
 	ty = mom_win_p6 + windowF_plos
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "p6", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "p6", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_p6.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -158,7 +158,7 @@ if p7_str$ == "p"
 	tx = mom_win_p7
 	ty = mom_win_p7 + windowF_plos
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "p7", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "p7", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_p7.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -170,7 +170,7 @@ if p8_str$ == "p"
 	tx = mom_win_p8
 	ty = mom_win_p8 + windowF_plos
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "p8", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "p8", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_p8.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -182,7 +182,7 @@ if p9_str$ == "p"
 	tx = mom_win_p9
 	ty = mom_win_p9 + windowF_plos
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "p9", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "p9", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_p9.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -195,7 +195,7 @@ if t1_str$ == "t"
 	tx = mom_win_t1
 	ty = mom_win_t1 + windowF_plos
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "t1", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "t1", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_t1.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -207,7 +207,7 @@ if t2_str$ == "t"
 	tx = mom_win_t2
 	ty = mom_win_t2 + windowF_plos
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "t2", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "t2", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_t2.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -219,7 +219,7 @@ if t3_str$ == "t"
 	tx = mom_win_t3
 	ty = mom_win_t3 + windowF_plos
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "t3", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "t3", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_t3.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -231,7 +231,7 @@ if t4_str$ == "t"
 	tx = mom_win_t4
 	ty = mom_win_t4 + windowF_plos
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "t4", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "t4", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_t4.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -244,7 +244,7 @@ if k1_str$ == "k"
 	tx = mom_win_k1
 	ty = mom_win_k1 + windowF_plos
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "k1", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "k1", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_k1.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -256,7 +256,7 @@ if k2_str$ == "k"
 	tx = mom_win_k2
 	ty = mom_win_k2 + windowF_plos
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "k2", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "k2", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_k2.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -268,7 +268,7 @@ if k3_str$ == "k"
 	tx = mom_win_k3
 	ty = mom_win_k3 + windowF_plos
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "k3", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "k3", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_k3.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -280,7 +280,7 @@ if k4_str$ == "k"
 	tx = mom_win_k4
 	ty = mom_win_k4 + windowF_plos
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "k4", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "k4", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_k4.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -292,7 +292,7 @@ if b_str$ == "b"
 	tx = mom_win_b
 	ty = mom_win_b + windowF_plos
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "b", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "b", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_b.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -304,7 +304,7 @@ if d_str$ == "d"
 	tx = mom_win_d
 	ty = mom_win_d + windowF_plos
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "d", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "d", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_d.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -316,7 +316,7 @@ if g1_str$ == "g"
 	tx = mom_win_g1
 	ty = mom_win_g1 + windowF_plos
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "g1", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "g1", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_g1.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -328,7 +328,7 @@ if g2_str$ == "g"
 	tx = mom_win_g2
 	ty = mom_win_g2 + windowF_plos
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "g2", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "g2", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_g2.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -340,7 +340,7 @@ if f_str$ == "f"
 	tx = mom_win_f
 	ty = mom_win_f + windowF_fric
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "f", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "f", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_f.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -352,7 +352,7 @@ if s_str$ == "s"
 	tx = mom_win_s
 	ty = mom_win_s + windowF_fric
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "s", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "s", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_s.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -364,7 +364,7 @@ if ch_str$ == "ch"
 	tx = mom_win_ch
 	ty = mom_win_ch + windowF_fric
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "ch", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "ch", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_ch.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -376,7 +376,7 @@ if v1_str$ == "v"
 	tx = mom_win_v1
 	ty = mom_win_v1 + windowF_fric
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "v1", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "v1", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	intervalfile$ = resdir$ + id$ + "_v1.wav"
 	select Sound 'id$'
 	Extract part... tx ty rectangular 1.0 no
@@ -388,7 +388,7 @@ if v2_str$ == "v"
 	tx = mom_win_v2
 	ty = mom_win_v2 + windowF_fric
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "v2", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "v2", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_v2.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -400,7 +400,7 @@ if z_str$ == "z"
 	tx = mom_win_z
 	ty = mom_win_z + windowF_fric
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "z", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "z", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_z.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no
@@ -412,7 +412,7 @@ if j_str$ == "j"
 	tx = mom_win_j
 	ty = mom_win_j + windowF_fric
 	call spectralMoments 'tx' 'ty'
-	appendFileLine: result_file$, filename$, csv_sep$, "j", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4), csv_sep$
+	appendFileLine: result_file$, filename$, csv_sep$, "j", csv_sep$, fixed$(grav,2), csv_sep$, fixed$(sdev,2), csv_sep$, fixed$(skew,4), csv_sep$, fixed$(kurt,4)
 	# intervalfile$ = resdir$ + id$ + "_j.wav"
 	# select Sound 'id$'
 	# Extract part... tx ty rectangular 1.0 no

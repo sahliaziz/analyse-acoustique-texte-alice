@@ -177,22 +177,17 @@ def vocal_quality_analysis(path: Path | str) -> pd.DataFrame:
     Takes a .csv file created by "qualite_vocale.praat", and returns a dataframe of relevant measures.
     """
     df = pd.read_csv(path, header=None)
-
-    return pd.DataFrame({
-        "Fichier":    df.iloc[:, 0],
-        "CPPs":       df.iloc[:, 1],
-        "Pente":      df.iloc[:, 2],
-        "Tilt":       df.iloc[:, 3],
-    })
+    df = df.iloc[[-1], :4]
+    df.columns = ["Fichier", "CPPs", "Pente", "Tilt"]
+    return df.reset_index(drop=True)
 
 
 def vowel_analysis(path: Path | str) -> pd.DataFrame:
     """Reads a .csv file.
     Takes a .csv file created by "10_vowel_triangle.praat", and returns a dataframe of relevant measures.
     """
-    df = pd.read_csv(path, header=0, index_col=0, sep="\t")
-    df = df.reindex(sorted(df.index), axis=0)
-    return df
+    df = pd.read_csv(path, header=0, sep="\t")
+    return df.iloc[[-1]].reset_index(drop=True)
 
 
 def mesures_acoustiques_consonnes(path: Path | str) -> pd.DataFrame:
@@ -201,35 +196,9 @@ def mesures_acoustiques_consonnes(path: Path | str) -> pd.DataFrame:
     Takes the path to `spectralmoments.csv` generated for one recording and
     returns only the relevant consonant measures.
     """
-    df = pd.read_csv(path, header=None)
-    rows: list[list[str]] = []
-
-    for _, row in df.iloc[1:].iterrows():
-        if any(row.iloc[index] == "--undefined--" for index in range(2, 6)):
-            continue
-
-        rows.append(
-            [
-                row.iloc[0],
-                row.iloc[1],
-                row.iloc[2],
-                row.iloc[3],
-                row.iloc[4],
-                row.iloc[5]
-            ]
-        )
-
-    return pd.DataFrame(
-        rows,
-        columns=[
-            "Fichier",
-            "Phonème",
-            "CoG",
-            "SD",
-            "SKEW",
-            "Kurtosis"
-        ]
-    )
+    df = pd.read_csv(path, header=None, skiprows=1).iloc[:, :6]
+    df.columns = ["Fichier", "Phonème", "CoG", "SD", "SKEW", "Kurtosis"]
+    return df
 
 
 def mesures_acoustiques_semivoyelles(path: Path) -> pd.DataFrame:
@@ -239,28 +208,10 @@ def mesures_acoustiques_semivoyelles(path: Path) -> pd.DataFrame:
     and returns the relevant semivowel acoustic measures.
     """
     df = pd.read_csv(path, header=0, encoding="utf-16be")
-
-    rows = [
-        [
-            row["fichier"],
-            row["interval"],
-            float(row["f1_slope"]),
-            float(row["f2_slope"]),
-            float(row["f3_slope"]),
-        ]
-        for _, row in df.iterrows()
-    ]
-
-    return pd.DataFrame(
-        rows,
-        columns=[
-            "Fichier",
-            "Phonème",
-            "Pente F1",
-            "Pente F2",
-            "Pente F3",
-        ],
-    )
+    df = df[["fichier", "interval", "f1_slope", "f2_slope", "f3_slope"]]
+    df.columns = ["Fichier", "Phonème", "Pente F1", "Pente F2", "Pente F3"]
+    df[["Pente F1", "Pente F2", "Pente F3"]] = df[["Pente F1", "Pente F2", "Pente F3"]].astype(float)
+    return df
 
 
 def measure_pitch(audio_file: Path) -> pd.DataFrame:
@@ -295,7 +246,7 @@ def mesures_acoustiques(
     df_vt = vowel_analysis(voweltriangle_path)
 
     df = df_vq.copy()
-    df["Aire triangle s2"] = df_vt["Area2"].values
+    df["Aire triangle s2"] = df_vt["Area2"]
     df["Moyenne F0"] = pitch_mean(f0_df)
     df["Ecart-type F0"] = pitch_std(f0_df)
     df["Débit de parole"] = speech_rate(audio_file, tg_content)
