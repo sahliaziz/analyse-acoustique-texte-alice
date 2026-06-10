@@ -1,18 +1,18 @@
+import io
+import subprocess
+import unicodedata
+import zipfile
+from pathlib import Path
+
+import diverg_opt as diverg
+import mesures_acoustiques as mesures
 import pandas as pd
 import plotly.express as px
 import requests
-import io
-from pathlib import Path
-from pydub import AudioSegment
 import spectral_moments
-import traitement_textgrid
-import diverg_opt as diverg
-import subprocess
-import mesures_acoustiques as mesures
 import streamlit as st
-import unicodedata
-import zipfile
-
+import traitement_textgrid
+from pydub import AudioSegment
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent.parent
@@ -47,6 +47,7 @@ if "analysis_started" not in st.session_state:
 # FUNCTIONS
 # =====================================================
 
+
 def forced_alignment_MAUS(audio_file: Path, text_file: Path) -> str | None:
     url = "https://clarin.phonetik.uni-muenchen.de/BASWebServices/services/runMAUSBasic"
     files = {
@@ -73,7 +74,7 @@ def forced_alignment_MAUS(audio_file: Path, text_file: Path) -> str | None:
                 f"Erreur lors du téléchargement du TextGrid: {textgrid_response.text}"
             )
             return None
-        
+
 
 def forced_alignment_MFA(audio_file: Path, transcript: Path, output_dir: Path) -> None:
     cmd = [
@@ -85,7 +86,7 @@ def forced_alignment_MFA(audio_file: Path, transcript: Path, output_dir: Path) -
         transcript,
         "alice",
         "french_mfa",
-        output_dir
+        output_dir,
     ]
     subprocess.run(cmd, check=True)
 
@@ -124,7 +125,7 @@ def zip_result_dir(result_dir: Path) -> bytes:
 # UI
 # =====================================================
 
-st.title('"Le voyage d\'Alice" — Extraction de mesures acoustiques"')
+st.title('"Le voyage d\'Alice" — Extraction de mesures acoustiques')
 
 with st.expander("À propos du projet", expanded=False):
     st.markdown("""
@@ -185,7 +186,7 @@ un ralentissement peut réduire l'intelligibilité.
 - **Durée moyenne des silences** — Pause moyenne entre les segments de parole.
 
 """)
-    
+
 with st.expander("Le texte standardisé", expanded=False):
     st.markdown(
         "**Texte standardisé « Le voyage d'Alice » :** \n"
@@ -305,7 +306,6 @@ if st.session_state.analysis_started and audio_files:
         mesure_vocale2_path = file_result_dir / "Measures_phrase2.txt"
         voweltriangle_path = file_result_dir / "voweltriangle.txt"
 
-        
         set_progress(1, "Traitement de l'audio...")
         processed_audio = process_audio(audio_file_path)
         processed_audio.export(processed_audio_path, format="wav")
@@ -334,9 +334,7 @@ if st.session_state.analysis_started and audio_files:
         order = 16
 
         set_progress(4, "Détection des frontières...")
-        frontieres = diverg.segment(
-            data, fe, ordre=order, with_backward=True
-        )
+        frontieres = diverg.segment(data, fe, ordre=order, with_backward=True)
 
         diverg_df = pd.DataFrame(frontieres, columns=["time", "metric"])
         diverg_df["time"] = diverg_df["time"] / fe
@@ -351,7 +349,9 @@ if st.session_state.analysis_started and audio_files:
                 consonnes, diverg_df, spectral_debug_path, processed_audio_path
             )
         except KeyError:
-            st.error(f"Erreur lors de l'extraction des moments spectraux, assurez vous que le texte lu correspond bien au texte standardisé.")
+            st.error(
+                "Erreur lors de l'extraction des moments spectraux, assurez vous que le texte lu correspond bien au texte standardisé."
+            )
             continue
 
         with open(input_csv_path, "w") as f:
@@ -388,10 +388,10 @@ if st.session_state.analysis_started and audio_files:
             audio_file=processed_audio_path,
         )
         mesures_cons_df = mesures.mesures_acoustiques_consonnes(
-                spectral_moments_output_path
+            spectral_moments_output_path
         )
         mesures_semivoyelles_df = mesures.mesures_acoustiques_semivoyelles(
-                formants_output_path
+            formants_output_path
         )
 
         mesures_df.to_csv(file_result_dir / "mesures_acoustiques.csv", index=False)
@@ -507,7 +507,6 @@ if not st.session_state.all_mesures_df.empty:
         "Comparer les enregistrements",
         expanded=True,
     ):
-        
         category = st.selectbox(
             "Sélectionnez une catégorie de mesures à comparer",
             options=["Mesures vocales", "Mesures consonantiques"],
@@ -516,15 +515,25 @@ if not st.session_state.all_mesures_df.empty:
         if category == "Mesures vocales":
             selection = st.selectbox(
                 "Sélectionnez une mesure à comparer",
-                options=st.session_state.all_mesures_df.drop(columns=["Fichier"]).columns
+                options=st.session_state.all_mesures_df.drop(
+                    columns=["Fichier"]
+                ).columns,
             )
             st.bar_chart(all_mesures_df.set_index("Fichier")[selection])
 
         elif category == "Mesures consonantiques":
             selection = st.selectbox(
                 "Sélectionnez une mesure à comparer",
-                options=st.session_state.all_mesures_cons_df.drop(columns=["Fichier", "Phonème"]).columns
+                options=st.session_state.all_mesures_cons_df.drop(
+                    columns=["Fichier", "Phonème"]
+                ).columns,
             )
             if selection in all_mesures_cons_df.columns:
-                fig = px.bar(all_mesures_cons_df, x="Fichier", y=selection, color="Phonème", barmode="group")
+                fig = px.bar(
+                    all_mesures_cons_df,
+                    x="Fichier",
+                    y=selection,
+                    color="Phonème",
+                    barmode="group",
+                )
                 st.plotly_chart(fig)
