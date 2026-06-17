@@ -3,7 +3,7 @@ import pandas as pd
 import tgt
 
 
-def tier_to_df(textgrid_path : Path, tier_index : int) -> pd.DataFrame:
+def tier_to_df(textgrid_path: Path, tier_index: int) -> pd.DataFrame:
     tg = tgt.io.read_textgrid(textgrid_path)
 
     tier = tg.tiers[tier_index]
@@ -23,8 +23,25 @@ def tier_to_df(textgrid_path : Path, tier_index : int) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def extract_consonants(df : pd.DataFrame) -> pd.DataFrame:
-    consonants = ("p", "t", "k", "b", "d", "g", "ɡ", "f", "s", "s", "ʃ", "S", "v", "z", "Z", "ʒ")
+def extract_consonants(df: pd.DataFrame) -> pd.DataFrame:
+    consonants = (
+        "p",
+        "t",
+        "k",
+        "b",
+        "d",
+        "g",
+        "ɡ",
+        "f",
+        "s",
+        "s",
+        "ʃ",
+        "S",
+        "v",
+        "z",
+        "Z",
+        "ʒ",
+    )
     consonants_df = pd.DataFrame(columns=["tmin", "text", "tmax"])
     length = len(df) - 2
     if length >= 658:
@@ -57,7 +74,9 @@ def extract_consonants(df : pd.DataFrame) -> pd.DataFrame:
                     new_row = pd.DataFrame(
                         {"tmin": [tmin], "text": [text], "tmax": [tmax]}
                     )
-                    consonants_df = pd.concat([consonants_df, new_row], ignore_index=True)
+                    consonants_df = pd.concat(
+                        [consonants_df, new_row], ignore_index=True
+                    )
         return consonants_df
     else:
         raise ValueError(f"DataFrame must have at least 660 rows, but has {len(df)}")

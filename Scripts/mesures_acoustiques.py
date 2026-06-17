@@ -15,9 +15,9 @@ import pandas as pd
 from silero_vad import get_speech_timestamps, load_silero_vad
 
 
-
 class SegmentType(Enum):
     """Represents the segment type of the segment. It can be SILENCE (1) or VOICE (2)."""
+
     SILENCE = 1
     VOICE = 2
 
@@ -26,6 +26,7 @@ class SegmentType(Enum):
 class Segment:
     """Represents a "segment" of audio frames by the start timecode, the end timecode, the duration / length of the
     segment and its type (SILENCE or VOICE)."""
+
     start: float
     end: float
     duration: float
@@ -35,7 +36,7 @@ class Segment:
         return f"{self.type} : {self.start} -> {self.end} [{self.duration}]"
 
 
-def read_wav(path : Path | str) -> tuple[bytes, int, float]:
+def read_wav(path: Path | str) -> tuple[bytes, int, float]:
     """Reads a .wav file.
     Takes the path, and returns (PCM audio data, sample rate, duration).
     """
@@ -144,7 +145,6 @@ def speech_rate(audio_file: Path | str, tg_content: str) -> float:
     if speech_duration == 0:
         return 0.0
     return vowel_count / speech_duration
-    
 
 
 def articulation_rate(audio_file: Path | str, tg_content: str) -> float:
@@ -210,7 +210,9 @@ def mesures_acoustiques_semivoyelles(path: Path) -> pd.DataFrame:
     df = pd.read_csv(path, header=0, encoding="utf-16be")
     df = df[["fichier", "interval", "f1_slope", "f2_slope", "f3_slope"]]
     df.columns = ["Fichier", "Phonème", "Pente F1", "Pente F2", "Pente F3"]
-    df[["Pente F1", "Pente F2", "Pente F3"]] = df[["Pente F1", "Pente F2", "Pente F3"]].astype(float)
+    df[["Pente F1", "Pente F2", "Pente F3"]] = df[
+        ["Pente F1", "Pente F2", "Pente F3"]
+    ].astype(float)
     return df
 
 
@@ -218,28 +220,29 @@ def measure_pitch(audio_file: Path) -> pd.DataFrame:
     snd = parselmouth.Sound(str(audio_file))
     pitch = snd.to_pitch(time_step=0.005, pitch_floor=50.0, pitch_ceiling=400.0)
 
-    df = pd.DataFrame({
-        "time": pitch.xs(),
-        "f0": pitch.selected_array["frequency"]
-    })
+    df = pd.DataFrame({"time": pitch.xs(), "f0": pitch.selected_array["frequency"]})
     return df
 
 
-def pitch_mean(f0_df : pd.DataFrame) -> float:
+def pitch_mean(f0_df: pd.DataFrame) -> float:
     f0_list = f0_df.iloc[:, 1]
     return f0_list[f0_list > 0.0].mean()
 
 
-def pitch_std(f0_df : pd.DataFrame) -> float:
+def pitch_std(f0_df: pd.DataFrame) -> float:
     f0_list = f0_df.iloc[:, 1]
     return f0_list[f0_list > 0.0].std()
 
 
 def mesures_acoustiques(
-        qualite_vocale: Path, voweltriangle_path: Path, f0_df: pd.DataFrame, tg_content: str, audio_file: Path
-    ) -> pd.DataFrame:
+    qualite_vocale: Path,
+    voweltriangle_path: Path,
+    f0_df: pd.DataFrame,
+    tg_content: str,
+    audio_file: Path,
+) -> pd.DataFrame:
     """Combines all acoustic measures into a single dataframe.
-    Takes paths to vocal quality and vowel triangle CSVs, a pitch dataframe, 
+    Takes paths to vocal quality and vowel triangle CSVs, a pitch dataframe,
     a TextGrid string, and an audio file path, and returns a dataframe with all measures.
     """
     df_vq = vocal_quality_analysis(qualite_vocale)

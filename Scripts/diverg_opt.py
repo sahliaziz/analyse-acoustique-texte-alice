@@ -72,7 +72,6 @@ if njit is not None:
 
         return erreur_residuelle, variance_erreur_residuelle
 
-
     @njit(cache=True)
     def _next_rupture_numba(data, start, ordre, Lmin, lamb, biais):
         long_signal = len(data)
@@ -460,9 +459,7 @@ class ModelCourtTrerm(object):
                 - dernier_echantillon * buff[tau - 1]
                 + buff[N - tau - 1] * dernier_buff
             )
-        coef_autocorr[0] = (
-            coef_autocorr[0] - dernier_echantillon**2 + dernier_buff**2
-        )
+        coef_autocorr[0] = coef_autocorr[0] - dernier_echantillon**2 + dernier_buff**2
         self.estimModel()
 
     def __str__(self):
@@ -550,15 +547,7 @@ def _segment_numba_driver(data, fe, ordre, Lmin, lamb, biais, with_backward):
     return frontieres
 
 
-def segment(
-    data,
-    fe,
-    ordre=2,
-    Lmin=0.02,
-    lamb=40.0,
-    biais=-0.2,
-    with_backward=True
-):
+def segment(data, fe, ordre=2, Lmin=0.02, lamb=40.0, biais=-0.2, with_backward=True):
     """
     Fonction principale de segmentation.
 
@@ -634,9 +623,7 @@ def segment(
                     * courtTerme.erreur_residuelle
                     * longTerme.erreur_residuelle
                     / denominateur
-                    - (1.0 + QV)
-                    * longTerme.erreur_residuelle**2
-                    / denominateur
+                    - (1.0 + QV) * longTerme.erreur_residuelle**2 / denominateur
                     + QV
                     - 1.0
                 ) / (2.0 * QV)
@@ -722,16 +709,10 @@ if __name__ == "__main__":
 
     data = [float(i) for i in data]
 
-
     if VERBOSE:
         st = time.time()
 
-    frontieres = segment(
-        data,
-        fe,
-        ordre=order,
-        with_backward=True
-    )
+    frontieres = segment(data, fe, ordre=order, with_backward=True)
 
     if VERBOSE:
         print(
