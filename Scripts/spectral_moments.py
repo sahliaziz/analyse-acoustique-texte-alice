@@ -285,47 +285,23 @@ def extract_moments(
     k4_rupt = [x for x in ruptures if x >= plos_k4_beg and x <= plos_k4_end]
 
     b_rupt = [x for x in ruptures if x >= plos_b_beg and x <= plos_b_end]
-    b_rupt_end = [
-        x for x in ruptures if x >= plos_b_end_inf and x <= plos_b_end_sup
-    ]
-    b_rupt_end_inf = [
-        x for x in ruptures if x >= plos_b_end_inf and x <= plos_b_end
-    ]
-    b_rupt_end_sup = [
-        x for x in ruptures if x > plos_b_end and x <= plos_b_end_sup
-    ]
+    b_rupt_end = [x for x in ruptures if x >= plos_b_end_inf and x <= plos_b_end_sup]
+    b_rupt_end_inf = [x for x in ruptures if x >= plos_b_end_inf and x <= plos_b_end]
+    b_rupt_end_sup = [x for x in ruptures if x > plos_b_end and x <= plos_b_end_sup]
 
     d_rupt = [x for x in ruptures if x >= plos_d_beg and x <= plos_d_end]
-    d_rupt_end = [
-        x for x in ruptures if x >= plos_d_end_inf and x <= plos_d_end_sup
-    ]
-    d_rupt_end_inf = [
-        x for x in ruptures if x >= plos_d_end_inf and x <= plos_d_end
-    ]
-    d_rupt_end_sup = [
-        x for x in ruptures if x > plos_d_end and x <= plos_d_end_sup
-    ]
+    d_rupt_end = [x for x in ruptures if x >= plos_d_end_inf and x <= plos_d_end_sup]
+    d_rupt_end_inf = [x for x in ruptures if x >= plos_d_end_inf and x <= plos_d_end]
+    d_rupt_end_sup = [x for x in ruptures if x > plos_d_end and x <= plos_d_end_sup]
 
     g1_rupt = [x for x in ruptures if x >= plos_g1_beg and x <= plos_g1_end]
-    g1_rupt_end = [
-        x for x in ruptures if x >= plos_g1_end_inf and x <= plos_g1_end_sup
-    ]
-    g1_rupt_end_inf = [
-        x for x in ruptures if x >= plos_g1_end_inf and x <= plos_g1_end
-    ]
-    g1_rupt_end_sup = [
-        x for x in ruptures if x > plos_g1_end and x <= plos_g1_end_sup
-    ]
+    g1_rupt_end = [x for x in ruptures if x >= plos_g1_end_inf and x <= plos_g1_end_sup]
+    g1_rupt_end_inf = [x for x in ruptures if x >= plos_g1_end_inf and x <= plos_g1_end]
+    g1_rupt_end_sup = [x for x in ruptures if x > plos_g1_end and x <= plos_g1_end_sup]
     g2_rupt = [x for x in ruptures if x >= plos_g2_beg and x <= plos_g2_end]
-    g2_rupt_end = [
-        x for x in ruptures if x >= plos_g2_end_inf and x <= plos_g2_end_sup
-    ]
-    g2_rupt_end_inf = [
-        x for x in ruptures if x >= plos_g2_end_inf and x <= plos_g2_end
-    ]
-    g2_rupt_end_sup = [
-        x for x in ruptures if x > plos_g2_end and x <= plos_g2_end_sup
-    ]
+    g2_rupt_end = [x for x in ruptures if x >= plos_g2_end_inf and x <= plos_g2_end_sup]
+    g2_rupt_end_inf = [x for x in ruptures if x >= plos_g2_end_inf and x <= plos_g2_end]
+    g2_rupt_end_sup = [x for x in ruptures if x > plos_g2_end and x <= plos_g2_end_sup]
 
     f_rupt = [x for x in ruptures if x >= fric_f_beg and x <= fric_f_end]
 
@@ -817,9 +793,7 @@ def extract_moments(
     # the cut-off score is set to 2000
 
     p1_rupt_am = [
-        x
-        for x in p1_rupt
-        if x >= (p1_mid_silence_end / samp_freq) and x <= plos_p1_end
+        x for x in p1_rupt if x >= (p1_mid_silence_end / samp_freq) and x <= plos_p1_end
     ]
 
     # check if first rupture intensity is > than 2000
@@ -916,13 +890,13 @@ def extract_moments(
                         samp_e = sample.get_energy()
                         sum_e = (samp_e - mean_e_rupt2_p1) ** 2 + sum_e
                     e_rupt2_p1 = sum_e
-                    e_rupt2_norm_p1 = e_rupt_p1 / (samp_freq * 0.005)
+                    e_rupt2_norm_p1 = e_rupt2_p1 / (samp_freq * 0.005)
 
                     if e_rupt1_norm_p1 >= 1500 and (
                         (p1_e_rupt1_beg / samp_freq) >= (plos_p1_end - 0.06)
                         and (p1_e_rupt1_beg / samp_freq) < (plos_p1_end - 0.005)
                     ):
-                        mom_win_p = p1_rupt_am[0]
+                        mom_win_p1 = p1_rupt_am[0]
                     # if not, but the following rupture is smaller in energy, take rupt1 as analysis window
                     elif e_rupt2_norm_p1 < e_rupt1_norm_p1:
                         mom_win_p1 = p1_rupt_am[0]
@@ -933,9 +907,7 @@ def extract_moments(
                     mom_win_p1 = plos_p1_end - frame_size_plos
 
     p2_rupt_am = [
-        x
-        for x in p2_rupt
-        if x >= (p2_mid_silence_end / samp_freq) and x <= plos_p2_end
+        x for x in p2_rupt if x >= (p2_mid_silence_end / samp_freq) and x <= plos_p2_end
     ]
 
     if not p2_rupt_am:
@@ -1023,7 +995,7 @@ def extract_moments(
                         samp_e = sample.get_energy()
                         sum_e = (samp_e - mean_e_rupt2_p2) ** 2 + sum_e
                     e_rupt2_p2 = sum_e
-                    e_rupt2_norm_p2 = e_rupt_p2 / (samp_freq * 0.005)
+                    e_rupt2_norm_p2 = e_rupt2_p2 / (samp_freq * 0.005)
 
                     if e_rupt1_norm_p2 >= 1500 and (
                         (p2_e_rupt1_beg / samp_freq) >= (plos_p2_end - 0.06)
@@ -1038,9 +1010,7 @@ def extract_moments(
                     mom_win_p2 = plos_p2_end - frame_size_plos
 
     p3_rupt_am = [
-        x
-        for x in p3_rupt
-        if x >= (p3_mid_silence_end / samp_freq) and x <= plos_p3_end
+        x for x in p3_rupt if x >= (p3_mid_silence_end / samp_freq) and x <= plos_p3_end
     ]
 
     if not p3_rupt_am:
@@ -1128,7 +1098,7 @@ def extract_moments(
                         samp_e = sample.get_energy()
                         sum_e = (samp_e - mean_e_rupt2_p3) ** 2 + sum_e
                     e_rupt2_p3 = sum_e
-                    e_rupt2_norm_p3 = e_rupt_p3 / (samp_freq * 0.005)
+                    e_rupt2_norm_p3 = e_rupt2_p3 / (samp_freq * 0.005)
 
                     if e_rupt1_norm_p3 >= 1500 and (
                         (p3_e_rupt1_beg / samp_freq) >= (plos_p3_end - 0.06)
@@ -1143,9 +1113,7 @@ def extract_moments(
                     mom_win_p3 = plos_p3_end - frame_size_plos
 
     p4_rupt_am = [
-        x
-        for x in p4_rupt
-        if x >= (p4_mid_silence_end / samp_freq) and x <= plos_p4_end
+        x for x in p4_rupt if x >= (p4_mid_silence_end / samp_freq) and x <= plos_p4_end
     ]
 
     if not p4_rupt_am:
@@ -1233,7 +1201,7 @@ def extract_moments(
                         samp_e = sample.get_energy()
                         sum_e = (samp_e - mean_e_rupt2_p4) ** 2 + sum_e
                     e_rupt2_p4 = sum_e
-                    e_rupt2_norm_p4 = e_rupt_p4 / (samp_freq * 0.005)
+                    e_rupt2_norm_p4 = e_rupt2_p4 / (samp_freq * 0.005)
 
                     if e_rupt1_norm_p4 >= 1500 and (
                         (p4_e_rupt1_beg / samp_freq) >= (plos_p4_end - 0.06)
@@ -1248,9 +1216,7 @@ def extract_moments(
                     mom_win_p4 = plos_p4_end - frame_size_plos
 
     p5_rupt_am = [
-        x
-        for x in p5_rupt
-        if x >= (p5_mid_silence_end / samp_freq) and x <= plos_p5_end
+        x for x in p5_rupt if x >= (p5_mid_silence_end / samp_freq) and x <= plos_p5_end
     ]
 
     if not p5_rupt_am:
@@ -1338,7 +1304,7 @@ def extract_moments(
                         samp_e = sample.get_energy()
                         sum_e = (samp_e - mean_e_rupt2_p5) ** 2 + sum_e
                     e_rupt2_p5 = sum_e
-                    e_rupt2_norm_p5 = e_rupt_p5 / (samp_freq * 0.005)
+                    e_rupt2_norm_p5 = e_rupt2_p5 / (samp_freq * 0.005)
 
                     if e_rupt1_norm_p5 >= 1500 and (
                         (p5_e_rupt1_beg / samp_freq) >= (plos_p5_end - 0.06)
@@ -1353,9 +1319,7 @@ def extract_moments(
                     mom_win_p5 = plos_p5_end - frame_size_plos
 
     p6_rupt_am = [
-        x
-        for x in p6_rupt
-        if x >= (p6_mid_silence_end / samp_freq) and x <= plos_p6_end
+        x for x in p6_rupt if x >= (p6_mid_silence_end / samp_freq) and x <= plos_p6_end
     ]
 
     if not p6_rupt_am:
@@ -1443,7 +1407,7 @@ def extract_moments(
                         samp_e = sample.get_energy()
                         sum_e = (samp_e - mean_e_rupt2_p6) ** 2 + sum_e
                     e_rupt2_p6 = sum_e
-                    e_rupt2_norm_p6 = e_rupt_p6 / (samp_freq * 0.005)
+                    e_rupt2_norm_p6 = e_rupt2_p6 / (samp_freq * 0.005)
 
                     if e_rupt1_norm_p6 >= 1500 and (
                         (p6_e_rupt1_beg / samp_freq) >= (plos_p6_end - 0.06)
@@ -1458,9 +1422,7 @@ def extract_moments(
                     mom_win_p6 = plos_p6_end - frame_size_plos
 
     p7_rupt_am = [
-        x
-        for x in p7_rupt
-        if x >= (p7_mid_silence_end / samp_freq) and x <= plos_p7_end
+        x for x in p7_rupt if x >= (p7_mid_silence_end / samp_freq) and x <= plos_p7_end
     ]
 
     if not p7_rupt_am:
@@ -1548,7 +1510,7 @@ def extract_moments(
                         samp_e = sample.get_energy()
                         sum_e = (samp_e - mean_e_rupt2_p7) ** 2 + sum_e
                     e_rupt2_p7 = sum_e
-                    e_rupt2_norm_p7 = e_rupt_p7 / (samp_freq * 0.005)
+                    e_rupt2_norm_p7 = e_rupt2_p7 / (samp_freq * 0.005)
 
                     if e_rupt1_norm_p7 >= 1500 and (
                         (p7_e_rupt1_beg / samp_freq) >= (plos_p7_end - 0.06)
@@ -1563,9 +1525,7 @@ def extract_moments(
                     mom_win_p7 = plos_p7_end - frame_size_plos
 
     p8_rupt_am = [
-        x
-        for x in p8_rupt
-        if x >= (p8_mid_silence_end / samp_freq) and x <= plos_p8_end
+        x for x in p8_rupt if x >= (p8_mid_silence_end / samp_freq) and x <= plos_p8_end
     ]
 
     if not p8_rupt_am:
@@ -1653,7 +1613,7 @@ def extract_moments(
                         samp_e = sample.get_energy()
                         sum_e = (samp_e - mean_e_rupt2_p8) ** 2 + sum_e
                     e_rupt2_p8 = sum_e
-                    e_rupt2_norm_p8 = e_rupt_p8 / (samp_freq * 0.005)
+                    e_rupt2_norm_p8 = e_rupt2_p8 / (samp_freq * 0.005)
 
                     if e_rupt1_norm_p8 >= 1500 and (
                         (p8_e_rupt1_beg / samp_freq) >= (plos_p8_end - 0.06)
@@ -1668,9 +1628,7 @@ def extract_moments(
                     mom_win_p8 = plos_p8_end - frame_size_plos
 
     p9_rupt_am = [
-        x
-        for x in p9_rupt
-        if x >= (p9_mid_silence_end / samp_freq) and x <= plos_p9_end
+        x for x in p9_rupt if x >= (p9_mid_silence_end / samp_freq) and x <= plos_p9_end
     ]
 
     if not p9_rupt_am:
@@ -1758,7 +1716,7 @@ def extract_moments(
                         samp_e = sample.get_energy()
                         sum_e = (samp_e - mean_e_rupt2_p9) ** 2 + sum_e
                     e_rupt2_p9 = sum_e
-                    e_rupt2_norm_p9 = e_rupt_p9 / (samp_freq * 0.005)
+                    e_rupt2_norm_p9 = e_rupt2_p9 / (samp_freq * 0.005)
 
                     if e_rupt1_norm_p9 >= 1500 and (
                         (p9_e_rupt1_beg / samp_freq) >= (plos_p9_end - 0.06)
@@ -1773,9 +1731,7 @@ def extract_moments(
                     mom_win_p9 = plos_p9_end - frame_size_plos
 
     t1_rupt_am = [
-        x
-        for x in t1_rupt
-        if x >= (t1_mid_silence_end / samp_freq) and x <= plos_t1_end
+        x for x in t1_rupt if x >= (t1_mid_silence_end / samp_freq) and x <= plos_t1_end
     ]
 
     if not t1_rupt_am:
@@ -1863,7 +1819,7 @@ def extract_moments(
                         samp_e = sample.get_energy()
                         sum_e = (samp_e - mean_e_rupt2_t1) ** 2 + sum_e
                     e_rupt2_t1 = sum_e
-                    e_rupt2_norm_t1 = e_rupt_t1 / (samp_freq * 0.005)
+                    e_rupt2_norm_t1 = e_rupt2_t1 / (samp_freq * 0.005)
 
                     if e_rupt1_norm_t1 >= 1500 and (
                         (t1_e_rupt1_beg / samp_freq) >= (plos_t1_end - 0.06)
@@ -1878,9 +1834,7 @@ def extract_moments(
                     mom_win_t1 = plos_t1_end - frame_size_plos
 
     t2_rupt_am = [
-        x
-        for x in t2_rupt
-        if x >= (t2_mid_silence_end / samp_freq) and x <= plos_t2_end
+        x for x in t2_rupt if x >= (t2_mid_silence_end / samp_freq) and x <= plos_t2_end
     ]
 
     if not t2_rupt_am:
@@ -1968,7 +1922,7 @@ def extract_moments(
                         samp_e = sample.get_energy()
                         sum_e = (samp_e - mean_e_rupt2_t2) ** 2 + sum_e
                     e_rupt2_t2 = sum_e
-                    e_rupt2_norm_t2 = e_rupt_t2 / (samp_freq * 0.005)
+                    e_rupt2_norm_t2 = e_rupt2_t2 / (samp_freq * 0.005)
 
                     if e_rupt1_norm_t2 >= 1500 and (
                         (t2_e_rupt1_beg / samp_freq) >= (plos_t2_end - 0.06)
@@ -1983,9 +1937,7 @@ def extract_moments(
                     mom_win_t2 = plos_t2_end - frame_size_plos
 
     t3_rupt_am = [
-        x
-        for x in t3_rupt
-        if x >= (t3_mid_silence_end / samp_freq) and x <= plos_t3_end
+        x for x in t3_rupt if x >= (t3_mid_silence_end / samp_freq) and x <= plos_t3_end
     ]
 
     if not t3_rupt_am:
@@ -2073,7 +2025,7 @@ def extract_moments(
                         samp_e = sample.get_energy()
                         sum_e = (samp_e - mean_e_rupt2_t3) ** 2 + sum_e
                     e_rupt2_t3 = sum_e
-                    e_rupt2_norm_t3 = e_rupt_t3 / (samp_freq * 0.005)
+                    e_rupt2_norm_t3 = e_rupt2_t3 / (samp_freq * 0.005)
 
                     if e_rupt1_norm_t3 >= 1500 and (
                         (t3_e_rupt1_beg / samp_freq) >= (plos_t3_end - 0.06)
@@ -2088,9 +2040,7 @@ def extract_moments(
                     mom_win_t3 = plos_t3_end - frame_size_plos
 
     t4_rupt_am = [
-        x
-        for x in t4_rupt
-        if x >= (t4_mid_silence_end / samp_freq) and x <= plos_t4_end
+        x for x in t4_rupt if x >= (t4_mid_silence_end / samp_freq) and x <= plos_t4_end
     ]
 
     if not t4_rupt_am:
@@ -2178,7 +2128,7 @@ def extract_moments(
                         samp_e = sample.get_energy()
                         sum_e = (samp_e - mean_e_rupt2_t4) ** 2 + sum_e
                     e_rupt2_t4 = sum_e
-                    e_rupt2_norm_t4 = e_rupt_t4 / (samp_freq * 0.005)
+                    e_rupt2_norm_t4 = e_rupt2_t4 / (samp_freq * 0.005)
 
                     if e_rupt1_norm_t4 >= 1500 and (
                         (t4_e_rupt1_beg / samp_freq) >= (plos_t4_end - 0.06)
@@ -2193,9 +2143,7 @@ def extract_moments(
                     mom_win_t4 = plos_t4_end - frame_size_plos
 
     k1_rupt_am = [
-        x
-        for x in k1_rupt
-        if x >= (k1_mid_silence_end / samp_freq) and x <= plos_k1_end
+        x for x in k1_rupt if x >= (k1_mid_silence_end / samp_freq) and x <= plos_k1_end
     ]
 
     if not k1_rupt_am:
@@ -2283,7 +2231,7 @@ def extract_moments(
                         samp_e = sample.get_energy()
                         sum_e = (samp_e - mean_e_rupt2_k1) ** 2 + sum_e
                     e_rupt2_k1 = sum_e
-                    e_rupt2_norm_k1 = e_rupt_k1 / (samp_freq * 0.005)
+                    e_rupt2_norm_k1 = e_rupt2_k1 / (samp_freq * 0.005)
 
                     if e_rupt1_norm_k1 >= 1500 and (
                         (k1_e_rupt1_beg / samp_freq) >= (plos_k1_end - 0.06)
@@ -2298,9 +2246,7 @@ def extract_moments(
                     mom_win_k1 = plos_k1_end - frame_size_plos
 
     k2_rupt_am = [
-        x
-        for x in k2_rupt
-        if x >= (k2_mid_silence_end / samp_freq) and x <= plos_k2_end
+        x for x in k2_rupt if x >= (k2_mid_silence_end / samp_freq) and x <= plos_k2_end
     ]
 
     if not k2_rupt_am:
@@ -2388,7 +2334,7 @@ def extract_moments(
                         samp_e = sample.get_energy()
                         sum_e = (samp_e - mean_e_rupt2_k2) ** 2 + sum_e
                     e_rupt2_k2 = sum_e
-                    e_rupt2_norm_k2 = e_rupt_k2 / (samp_freq * 0.005)
+                    e_rupt2_norm_k2 = e_rupt2_k2 / (samp_freq * 0.005)
 
                     if e_rupt1_norm_k2 >= 1500 and (
                         (k2_e_rupt1_beg / samp_freq) >= (plos_k2_end - 0.06)
@@ -2403,9 +2349,7 @@ def extract_moments(
                     mom_win_k2 = plos_k2_end - frame_size_plos
 
     k3_rupt_am = [
-        x
-        for x in k3_rupt
-        if x >= (k3_mid_silence_end / samp_freq) and x <= plos_k3_end
+        x for x in k3_rupt if x >= (k3_mid_silence_end / samp_freq) and x <= plos_k3_end
     ]
 
     if not k3_rupt_am:
@@ -2493,7 +2437,7 @@ def extract_moments(
                         samp_e = sample.get_energy()
                         sum_e = (samp_e - mean_e_rupt2_k3) ** 2 + sum_e
                     e_rupt2_k3 = sum_e
-                    e_rupt2_norm_k3 = e_rupt_k3 / (samp_freq * 0.005)
+                    e_rupt2_norm_k3 = e_rupt2_k3 / (samp_freq * 0.005)
 
                     if e_rupt1_norm_k3 >= 1500 and (
                         (k3_e_rupt1_beg / samp_freq) >= (plos_k3_end - 0.06)
@@ -2508,9 +2452,7 @@ def extract_moments(
                     mom_win_k3 = plos_k3_end - frame_size_plos
 
     k4_rupt_am = [
-        x
-        for x in k4_rupt
-        if x >= (k4_mid_silence_end / samp_freq) and x <= plos_k4_end
+        x for x in k4_rupt if x >= (k4_mid_silence_end / samp_freq) and x <= plos_k4_end
     ]
 
     if not k4_rupt_am:
@@ -2598,7 +2540,7 @@ def extract_moments(
                         samp_e = sample.get_energy()
                         sum_e = (samp_e - mean_e_rupt2_k4) ** 2 + sum_e
                     e_rupt2_k4 = sum_e
-                    e_rupt2_norm_k4 = e_rupt_k4 / (samp_freq * 0.005)
+                    e_rupt2_norm_k4 = e_rupt2_k4 / (samp_freq * 0.005)
 
                     if e_rupt1_norm_k4 >= 1500 and (
                         (k4_e_rupt1_beg / samp_freq) >= (plos_k4_end - 0.06)
@@ -2727,10 +2669,7 @@ def extract_moments(
                 "\nWARNING: There are not at least two ruptures inside of the [f] segment.\nTook the midpoint of the segment as analysis window location",
                 file=result_file,
             )
-    elif (
-        len(f_rupt) == 2
-        and (float(f_rupt[1]) - float(f_rupt[0])) < frame_size_fric
-    ):
+    elif len(f_rupt) == 2 and (float(f_rupt[1]) - float(f_rupt[0])) < frame_size_fric:
         mom_win_f = (
             float(fric_f[0])
             + ((float(fric_f[2]) - float(fric_f[0])) / 2)
@@ -2766,10 +2705,7 @@ def extract_moments(
                 "\nWARNING: There are not at least two ruptures inside of the [s] segment.\nTook the midpoint of the segment as analysis window location",
                 file=result_file,
             )
-    elif (
-        len(s_rupt) == 2
-        and (float(s_rupt[1]) - float(s_rupt[0])) < frame_size_fric
-    ):
+    elif len(s_rupt) == 2 and (float(s_rupt[1]) - float(s_rupt[0])) < frame_size_fric:
         mom_win_s = (
             float(fric_s[0])
             + ((float(fric_s[2]) - float(fric_s[0])) / 2)
@@ -2806,8 +2742,7 @@ def extract_moments(
                 file=result_file,
             )
     elif (
-        len(ch_rupt) == 2
-        and (float(ch_rupt[1]) - float(ch_rupt[0])) < frame_size_fric
+        len(ch_rupt) == 2 and (float(ch_rupt[1]) - float(ch_rupt[0])) < frame_size_fric
     ):
         mom_win_ch = (
             float(fric_ch[0])
@@ -2845,8 +2780,7 @@ def extract_moments(
                 file=result_file,
             )
     elif (
-        len(v1_rupt) == 2
-        and (float(v1_rupt[1]) - float(v1_rupt[0])) < frame_size_fric
+        len(v1_rupt) == 2 and (float(v1_rupt[1]) - float(v1_rupt[0])) < frame_size_fric
     ):
         mom_win_v1 = (
             float(fric_v1.iloc[0])
@@ -2859,8 +2793,7 @@ def extract_moments(
                 file=result_file,
             )
     elif (
-        len(v1_rupt) == 2
-        and (float(v1_rupt[1]) - float(v1_rupt[0])) > frame_size_fric
+        len(v1_rupt) == 2 and (float(v1_rupt[1]) - float(v1_rupt[0])) > frame_size_fric
     ):
         min_e_seg = sys.maxsize
         if (float(v1_rupt[1]) - float(v1_rupt[0])) >= 0.02:
@@ -2875,9 +2808,7 @@ def extract_moments(
             if sum_e_norm < min_e_seg:
                 min_e_seg = sum_e_norm
                 mom_win_v1 = (
-                    v1_rupt[0]
-                    + ((v1_rupt[1] - v1_rupt[0]) / 2)
-                    - frame_size_fric / 2
+                    v1_rupt[0] + ((v1_rupt[1] - v1_rupt[0]) / 2) - frame_size_fric / 2
                 )
         elif (float(v1_rupt[1]) - float(v1_rupt[0])) < 0.02:
             with open(resFile, "a") as result_file:
@@ -2896,9 +2827,7 @@ def extract_moments(
             if sum_e_norm < min_e_seg:
                 min_e_seg = sum_e_norm
                 mom_win_v1 = (
-                    v1_rupt[0]
-                    + ((v1_rupt[1] - v1_rupt[0]) / 2)
-                    - frame_size_fric / 2
+                    v1_rupt[0] + ((v1_rupt[1] - v1_rupt[0]) / 2) - frame_size_fric / 2
                 )
     else:
         l = len(v1_rupt)
@@ -2935,8 +2864,7 @@ def extract_moments(
                 file=result_file,
             )
     elif (
-        len(v2_rupt) == 2
-        and (float(v2_rupt[1]) - float(v2_rupt[0])) < frame_size_fric
+        len(v2_rupt) == 2 and (float(v2_rupt[1]) - float(v2_rupt[0])) < frame_size_fric
     ):
         mom_win_v2 = (
             float(fric_v2[0])
@@ -2950,8 +2878,7 @@ def extract_moments(
             )
 
     elif (
-        len(v2_rupt) == 2
-        and (float(v2_rupt[1]) - float(v2_rupt[0])) > frame_size_fric
+        len(v2_rupt) == 2 and (float(v2_rupt[1]) - float(v2_rupt[0])) > frame_size_fric
     ):
         min_e_seg = sys.maxsize
         if (float(v2_rupt[1]) - float(v2_rupt[0])) >= 0.02:
@@ -2966,9 +2893,7 @@ def extract_moments(
             if sum_e_norm < min_e_seg:
                 min_e_seg = sum_e_norm
                 mom_win_v2 = (
-                    v2_rupt[0]
-                    + ((v2_rupt[1] - v2_rupt[0]) / 2)
-                    - frame_size_fric / 2
+                    v2_rupt[0] + ((v2_rupt[1] - v2_rupt[0]) / 2) - frame_size_fric / 2
                 )
         elif (float(v2_rupt[1]) - float(v2_rupt[0])) < 0.02:
             with open(resFile, "a") as result_file:
@@ -2987,9 +2912,7 @@ def extract_moments(
             if sum_e_norm < min_e_seg:
                 min_e_seg = sum_e_norm
                 mom_win_v2 = (
-                    v2_rupt[0]
-                    + ((v2_rupt[1] - v2_rupt[0]) / 2)
-                    - frame_size_fric / 2
+                    v2_rupt[0] + ((v2_rupt[1] - v2_rupt[0]) / 2) - frame_size_fric / 2
                 )
     else:
         l = len(v2_rupt)
@@ -3026,10 +2949,7 @@ def extract_moments(
                 file=result_file,
             )
 
-    elif (
-        len(z_rupt) == 2
-        and (float(z_rupt[1]) - float(z_rupt[0])) < frame_size_fric
-    ):
+    elif len(z_rupt) == 2 and (float(z_rupt[1]) - float(z_rupt[0])) < frame_size_fric:
         mom_win_z = (
             float(fric_z[0])
             + ((float(fric_z[2]) - float(fric_z[0])) / 2)
@@ -3041,10 +2961,7 @@ def extract_moments(
                 file=result_file,
             )
 
-    elif (
-        len(z_rupt) == 2
-        and (float(z_rupt[1]) - float(z_rupt[0])) > frame_size_fric
-    ):
+    elif len(z_rupt) == 2 and (float(z_rupt[1]) - float(z_rupt[0])) > frame_size_fric:
         min_e_seg = sys.maxsize
         if (float(z_rupt[1]) - float(z_rupt[0])) >= 0.02:
             rupt_beg = z_rupt[0] * samp_freq
@@ -3058,9 +2975,7 @@ def extract_moments(
             if sum_e_norm < min_e_seg:
                 min_e_seg = sum_e_norm
                 mom_win_z = (
-                    z_rupt[0]
-                    + ((z_rupt[1] - z_rupt[0]) / 2)
-                    - frame_size_fric / 2
+                    z_rupt[0] + ((z_rupt[1] - z_rupt[0]) / 2) - frame_size_fric / 2
                 )
         elif (float(z_rupt[1]) - float(z_rupt[0])) < 0.02:
             with open(resFile, "a") as result_file:
@@ -3079,9 +2994,7 @@ def extract_moments(
             if sum_e_norm < min_e_seg:
                 min_e_seg = sum_e_norm
                 mom_win_z = (
-                    z_rupt[0]
-                    + ((z_rupt[1] - z_rupt[0]) / 2)
-                    - frame_size_fric / 2
+                    z_rupt[0] + ((z_rupt[1] - z_rupt[0]) / 2) - frame_size_fric / 2
                 )
     else:
         l = len(z_rupt)
@@ -3117,10 +3030,7 @@ def extract_moments(
                 "\nWARNING: There are not at least two ruptures inside of the [j] segment.\nTook the midpoint of the segment as analysis window location",
                 file=result_file,
             )
-    elif (
-        len(j_rupt) == 2
-        and (float(j_rupt[1]) - float(j_rupt[0])) < frame_size_fric
-    ):
+    elif len(j_rupt) == 2 and (float(j_rupt[1]) - float(j_rupt[0])) < frame_size_fric:
         mom_win_j = (
             float(fric_j[0])
             + ((float(fric_j[2]) - float(fric_j[0])) / 2)
@@ -3132,10 +3042,7 @@ def extract_moments(
                 file=result_file,
             )
 
-    elif (
-        len(j_rupt) == 2
-        and (float(j_rupt[1]) - float(j_rupt[0])) > frame_size_fric
-    ):
+    elif len(j_rupt) == 2 and (float(j_rupt[1]) - float(j_rupt[0])) > frame_size_fric:
         min_e_seg = sys.maxsize
         if (float(j_rupt[1]) - float(j_rupt[0])) >= 0.02:
             rupt_beg = j_rupt[0] * samp_freq
@@ -3149,9 +3056,7 @@ def extract_moments(
             if sum_e_norm < min_e_seg:
                 min_e_seg = sum_e_norm
                 mom_win_j = (
-                    j_rupt[0]
-                    + ((j_rupt[1] - j_rupt[0]) / 2)
-                    - frame_size_fric / 2
+                    j_rupt[0] + ((j_rupt[1] - j_rupt[0]) / 2) - frame_size_fric / 2
                 )
         elif (float(j_rupt[1]) - float(j_rupt[0])) < 0.02:
             with open(resFile, "a") as result_file:
@@ -3170,9 +3075,7 @@ def extract_moments(
             if sum_e_norm < min_e_seg:
                 min_e_seg = sum_e_norm
                 mom_win_j = (
-                    j_rupt[0]
-                    + ((j_rupt[1] - j_rupt[0]) / 2)
-                    - frame_size_fric / 2
+                    j_rupt[0] + ((j_rupt[1] - j_rupt[0]) / 2) - frame_size_fric / 2
                 )
 
     else:
