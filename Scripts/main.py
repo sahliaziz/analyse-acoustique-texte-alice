@@ -76,15 +76,18 @@ def forced_alignment_MAUS(audio_file: Path, text_file: Path) -> str | None:
             return None
 
 
-def forced_alignment_MFA(audio_file: Path, transcript: Path, output_dir: Path) -> None:
+def forced_alignment_MFA(
+    audio_file: Path, transcript: Path, dictionary: str, output_dir: Path
+) -> None:
     cmd = [
         "mfa",
         "align_one",
+        "--single_speaker",
         "--output_format",
         "long_textgrid",
         audio_file,
         transcript,
-        "alice",
+        dictionary,
         "french_mfa",
         output_dir,
     ]
@@ -233,11 +236,15 @@ controls_disabled = not audio_files or st.session_state.analysis_started
 
 gender_selector = st.radio(
     "Sélectionnez le genre du locuteur",
-    options=["Male", "Femelle"],
+    options=["Homme", "Femme"],
     disabled=controls_disabled,
 )
 
-speaker_gender = "M" if gender_selector == "Male" else "F"
+speaker_gender = "M" if gender_selector == "Homme" else "F"
+
+transcription_checkbox = st.checkbox(
+    "Transcrire le texte lu pour vérifier la lecture", disabled=controls_disabled
+)
 
 
 # =====================================================
@@ -258,6 +265,8 @@ st.divider()
 # =====================================================
 
 if st.session_state.analysis_started and audio_files:
+    total_steps = 11 if transcription_checkbox else 9
+
     for audio_file in audio_files:
         audio_file.name = sanitize_filename(audio_file.name)
 
@@ -268,7 +277,6 @@ if st.session_state.analysis_started and audio_files:
         if audio_file.name in st.session_state.processed_files:
             continue
 
-        total_steps = 9
         progress_text = st.empty()
         progress_text.markdown(f"**Traitement de {audio_file.name}**")
         progress_bar = st.progress(0)
@@ -305,13 +313,14 @@ if st.session_state.analysis_started and audio_files:
         mesure_vocale1_path = file_result_dir / "Measures_phrase1.txt"
         mesure_vocale2_path = file_result_dir / "Measures_phrase2.txt"
         voweltriangle_path = file_result_dir / "voweltriangle.txt"
+        transcript_path = file_result_dir / f"{output_stem}_transcript.txt"
 
         set_progress(1, "Traitement de l'audio...")
         processed_audio = process_audio(audio_file_path)
         processed_audio.export(processed_audio_path, format="wav")
 
         set_progress(2, "Alignement forcé...")
-        forced_alignment_MFA(processed_audio_path, fichier_texte, PROJECT_ROOT)
+        forced_alignment_MFA(processed_audio_path, fichier_texte, "alice", PROJECT_ROOT)
 
         textgrid_content = tg_output_path.read_text()
         df_tg = traitement_textgrid.tier_to_df(tg_output_path, 1)
@@ -402,6 +411,51 @@ if st.session_state.analysis_started and audio_files:
             file_result_dir / "mesures_acoustiques_semivoyelles.csv", index=False
         )
 
+        if transcription_checkbox:
+            import torch
+            from qwen_asr import Qwen3ASRModel
+            import dtw
+
+            set_progress(10, "Transcription du texte lu...")
+
+            model = Qwen3ASRModel.from_pretrained(
+                pretrained_model_name_or_path="Qwen/Qwen3-ASR-0.6B",
+                dtype=torch.bfloat16,
+                device_map="cuda:0",
+                max_inference_batch_size=32,
+                max_new_tokens=512,
+            )
+
+            results = model.transcribe(
+                audio=str(processed_audio_path),
+                language="French",
+            )
+
+            transcript_text = results[0].text
+
+            with open(transcript_path, "w") as f:
+                f.write(transcript_text)
+
+            set_progress(11, "Alignement forcé...")
+            forced_alignment_MFA(
+                processed_audio_path, transcript_path, "french_mfa", PROJECT_ROOT
+            )
+
+            textgrid_content = tg_output_path.read_text()
+            transcript_df_tg = traitement_textgrid.tier_to_df(tg_output_path, 1)
+
+            all_phonemes = sorted(
+                set(df_tg["text"].tolist() + transcript_df_tg["text"].tolist())
+            )
+            phoneme_to_id = {p: i for i, p in enumerate(all_phonemes)}
+
+            ref_features = dtw.df_to_feature_matrix(df_tg, phoneme_to_id)
+            trans_features = dtw.df_to_feature_matrix(transcript_df_tg, phoneme_to_id)
+
+            raw_dist, norm_dist, path_len = dtw.dtw_distance(
+                ref_features, trans_features
+            )
+
         # -------------------------------------------------
         # SAVE GLOBAL DATA
         # -------------------------------------------------
@@ -443,6 +497,8 @@ if st.session_state.analysis_started and audio_files:
             "phrase2_img": file_result_dir / "pictures" / f"{output_stem}_phrase2.png",
             "triangle_img": file_result_dir / "pictures" / f"{output_stem}_plot.png",
             "zip_data": zip_result_dir(file_result_dir),
+            "raw_dtw_distance": raw_dist if transcription_checkbox else None,
+            "norm_dtw_distance": norm_dist if transcription_checkbox else None,
         }
 
         st.session_state.processed_files.add(audio_file.name)
@@ -471,6 +527,11 @@ if st.session_state.file_results:
             st.image(result["phrase1_img"])
 
             st.image(result["phrase2_img"])
+            
+            if result['raw_dtw_distance'] is not None and result['norm_dtw_distance'] is not None:
+                st.write(
+                    f"Distance DTW brute : {result['raw_dtw_distance']:.2f}, Distance DTW normalisée : {result['norm_dtw_distance']:.2f}"
+                )
 
             st.subheader("2) Mesures vocaliques")
 
