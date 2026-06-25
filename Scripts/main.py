@@ -130,6 +130,10 @@ def zip_result_dir(result_dir: Path) -> bytes:
 
 st.title('"Le voyage d\'Alice" — Extraction de mesures acoustiques')
 
+st.image(PROJECT_ROOT / "logo_irit.png")
+st.image(PROJECT_ROOT / "SAMOVA.png")
+
+
 audio_files = st.file_uploader(
     "Téléchargez un ou plusieurs fichiers audio",
     type=["wav"],
@@ -172,6 +176,9 @@ if st.session_state.analysis_started and audio_files:
     total_steps = 11 if transcription_checkbox else 9
 
     for audio_file in audio_files:
+        spectral_moments_success = True
+        mesures_cons_df: pd.DataFrame | None = None
+
         audio_file.name = sanitize_filename(audio_file.name)
 
         # -------------------------------------
@@ -228,6 +235,7 @@ if st.session_state.analysis_started and audio_files:
 
         textgrid_content = tg_output_path.read_text()
         df_tg = traitement_textgrid.tier_to_df(tg_output_path, 1)
+        ref_words_df = traitement_textgrid.tier_to_df(tg_output_path, 0)
         consonnes = traitement_textgrid.extract_consonants(df_tg)
 
         set_progress(3, "Extraction des mesures acoustiques...")
@@ -261,11 +269,15 @@ if st.session_state.analysis_started and audio_files:
             spectral_moments.extract_moments(
                 consonnes, diverg_df, spectral_debug_path, processed_audio_path
             )
-        except KeyError:
-            st.error(
-                "Erreur lors de l'extraction des moments spectraux, assurez vous que le texte lu correspond bien au texte standardisé."
+            mesures_cons_df = mesures.mesures_acoustiques_consonnes(
+                spectral_moments_output_path
             )
-            continue
+        except Exception:
+            st.error(
+                f"Erreur lors de l'extraction des moments spectraux dans **{audio_file.name}**, assurez vous que le texte lu correspond bien au texte standardisé."
+            )
+            spectral_moments_success = False
+            mesures_cons_df = None
 
         with open(input_csv_path, "w") as f:
             f.write("Title;Speaker;File;Language;Log;Plotfile\n")
@@ -300,17 +312,16 @@ if st.session_state.analysis_started and audio_files:
             tg_content=textgrid_content,  # type: ignore
             audio_file=processed_audio_path,
         )
-        mesures_cons_df = mesures.mesures_acoustiques_consonnes(
-            spectral_moments_output_path
-        )
         mesures_semivoyelles_df = mesures.mesures_acoustiques_semivoyelles(
             formants_output_path
         )
 
         mesures_df.to_csv(file_result_dir / "mesures_acoustiques.csv", index=False)
-        mesures_cons_df.to_csv(
-            file_result_dir / "mesures_acoustiques_consonnes.csv", index=False
-        )
+
+        if spectral_moments_success and mesures_cons_df is not None:
+            mesures_cons_df.to_csv(
+                file_result_dir / "mesures_acoustiques_consonnes.csv", index=False
+            )
         mesures_semivoyelles_df.to_csv(
             file_result_dir / "mesures_acoustiques_semivoyelles.csv", index=False
         )
@@ -318,7 +329,8 @@ if st.session_state.analysis_started and audio_files:
         if transcription_checkbox:
             import torch
             from qwen_asr import Qwen3ASRModel
-            import dtw
+            import transcript
+
 
             set_progress(10, "Transcription du texte lu...")
 
@@ -342,23 +354,14 @@ if st.session_state.analysis_started and audio_files:
 
             set_progress(11, "Alignement forcé...")
             forced_alignment_MFA(
-                processed_audio_path, transcript_path, "french_mfa", PROJECT_ROOT
+                processed_audio_path, transcript_path, "alice", PROJECT_ROOT
             )
 
             textgrid_content = tg_output_path.read_text()
             transcript_df_tg = traitement_textgrid.tier_to_df(tg_output_path, 1)
+            transcript_words_df = traitement_textgrid.tier_to_df(tg_output_path, 0)
 
-            all_phonemes = sorted(
-                set(df_tg["text"].tolist() + transcript_df_tg["text"].tolist())
-            )
-            phoneme_to_id = {p: i for i, p in enumerate(all_phonemes)}
-
-            ref_features = dtw.df_to_feature_matrix(df_tg, phoneme_to_id)
-            trans_features = dtw.df_to_feature_matrix(transcript_df_tg, phoneme_to_id)
-
-            raw_dist, norm_dist, path_len = dtw.dtw_distance(
-                ref_features, trans_features
-            )
+            diff = transcript.word_diff_html(ref_words_df, transcript_words_df, df_tg, transcript_df_tg)
 
         # -------------------------------------------------
         # SAVE GLOBAL DATA
@@ -371,14 +374,14 @@ if st.session_state.analysis_started and audio_files:
             ],
             ignore_index=True,
         )
-
-        st.session_state.all_mesures_cons_df = pd.concat(
-            [
-                st.session_state.all_mesures_cons_df,
-                mesures_cons_df,
-            ],
-            ignore_index=True,
-        )
+        if spectral_moments_success and mesures_cons_df is not None:
+            st.session_state.all_mesures_cons_df = pd.concat(
+                [
+                    st.session_state.all_mesures_cons_df,
+                    mesures_cons_df,
+                ],
+                ignore_index=True,
+            )
 
         st.session_state.all_mesures_semivoyelles_df = pd.concat(
             [
@@ -401,8 +404,7 @@ if st.session_state.analysis_started and audio_files:
             "phrase2_img": file_result_dir / "pictures" / f"{output_stem}_phrase2.png",
             "triangle_img": file_result_dir / "pictures" / f"{output_stem}_plot.png",
             "zip_data": zip_result_dir(file_result_dir),
-            "raw_dtw_distance": raw_dist if transcription_checkbox else None,
-            "norm_dtw_distance": norm_dist if transcription_checkbox else None,
+            "diff": diff if transcription_checkbox else None,
         }
 
         st.session_state.processed_files.add(audio_file.name)
@@ -426,17 +428,50 @@ if st.session_state.file_results:
             f"Résultats pour {filename}",
             expanded=True,
         ):
+            if result['diff'] is not None:
+                st.markdown("""
+                <style>
+                .diff-container {
+                    font-family: monospace;
+                    line-height: 2;
+                    font-size: 16px;
+                }
+
+                .diff-equal {
+                    padding: 2px 4px;
+                }
+
+                .diff-insert {
+                    background-color: #fff8c5;
+                    color: #24292f;
+                    border-radius: 4px;
+                    padding: 2px 4px;
+                }
+
+                .diff-delete {
+                    background-color: #ffebe9;
+                    color: #cf222e;
+                    border-radius: 4px;
+                    padding: 2px 4px;
+                }
+
+                .diff-replace {
+                    background-color: #fff8c5;
+                    color: #24292f;
+                    border-radius: 4px;
+                    padding: 2px 4px;
+                }
+                </style>
+                """, unsafe_allow_html=True)
+
+                st.markdown(diff, unsafe_allow_html=True)
+
             st.subheader("1) Mesures de qualité vocale")
 
             st.image(result["phrase1_img"])
 
             st.image(result["phrase2_img"])
             
-            if result['raw_dtw_distance'] is not None and result['norm_dtw_distance'] is not None:
-                st.write(
-                    f"Distance DTW brute : {result['raw_dtw_distance']:.2f}, Distance DTW normalisée : {result['norm_dtw_distance']:.2f}"
-                )
-
             st.subheader("2) Mesures vocaliques")
 
             st.write(result["mesures_df"].drop(columns=["Fichier"]))
@@ -445,7 +480,8 @@ if st.session_state.file_results:
 
             st.subheader("3) Mesures consonantiques")
 
-            st.write(result["mesures_cons_df"].drop(columns=["Fichier"]))
+            if result['mesures_cons_df'] is not None:
+                st.write(result["mesures_cons_df"].drop(columns=["Fichier"]))
 
             st.subheader("4) Mesures semi-consonantiques")
 
@@ -468,13 +504,17 @@ if not st.session_state.all_mesures_df.empty:
     all_mesures_cons_df = st.session_state.all_mesures_cons_df
     all_mesures_semivoyelles_df = st.session_state.all_mesures_semivoyelles_df
 
+    comparison_options = ["Mesures vocales"]
+    if not all_mesures_cons_df.empty:
+        comparison_options.append("Mesures consonantiques")
+
     with st.expander(
         "Comparer les enregistrements",
         expanded=True,
     ):
         category = st.selectbox(
             "Sélectionnez une catégorie de mesures à comparer",
-            options=["Mesures vocales", "Mesures consonantiques"],
+            options=comparison_options,
         )
 
         if category == "Mesures vocales":
@@ -489,9 +529,7 @@ if not st.session_state.all_mesures_df.empty:
         elif category == "Mesures consonantiques":
             selection = st.selectbox(
                 "Sélectionnez une mesure à comparer",
-                options=st.session_state.all_mesures_cons_df.drop(
-                    columns=["Fichier", "Phonème"]
-                ).columns,
+                options=all_mesures_cons_df.drop(columns=["Fichier", "Phonème"]).columns,
             )
             if selection in all_mesures_cons_df.columns:
                 fig = px.bar(
