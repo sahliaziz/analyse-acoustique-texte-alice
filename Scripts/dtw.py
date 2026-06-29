@@ -11,6 +11,9 @@ def df_to_feature_matrix(
     timing_weight: scales the contribution of timing features relative to
                    phoneme identity. Increase to penalise timing mismatches more.
     """
+    if df.empty:
+        return np.empty((0, 3), dtype=float)
+
     phoneme_ids = np.array([phoneme_to_id[p] for p in df["text"]], dtype=float)
     phoneme_ids /= max(len(phoneme_to_id) - 1, 1)
 
@@ -34,6 +37,9 @@ def dtw_distance(seq_a: np.ndarray, seq_b: np.ndarray) -> tuple[float, float, in
     Returns the normalised DTW distance (divided by the path length).
     """
     n, m = len(seq_a), len(seq_b)
+    if n == 0 or m == 0:
+        raise ValueError("DTW requires two non-empty sequences")
+
     D = np.full((n + 1, m + 1), np.inf)
     D[0, 0] = 0.0
 

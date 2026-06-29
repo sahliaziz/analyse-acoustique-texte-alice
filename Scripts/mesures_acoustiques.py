@@ -97,7 +97,10 @@ def vowel_counter(tg_content: str) -> int:
     """
     vowels = {"a", "e", "i", "o", "u", "y", "ø", "œ", "ɑ̃", "ɔ", "ɔ̃", "ə", "ɛ", "ɛ̃", "œ̃"}
 
-    tier3_content = tg_content.split("item [2]")[1]
+    try:
+        tier3_content = tg_content.split("item [2]", 1)[1]
+    except IndexError:
+        return 0
     labels = re.findall(r'text = "(.*?)"', tier3_content)
 
     return sum(1 for label in labels if label.strip() in vowels)
@@ -169,6 +172,8 @@ def mean_silence_file(path: Path | str):
     for seg in segments:
         if seg.type == SegmentType.SILENCE:
             silence_list.append(seg.duration)
+    if not silence_list:
+        return 0.0
     return np.mean(silence_list)
 
 
@@ -197,6 +202,10 @@ def mesures_acoustiques_consonnes(path: Path | str) -> pd.DataFrame:
     returns only the relevant consonant measures.
     """
     df = pd.read_csv(path, header=None, skiprows=1).iloc[:, :6]
+    if df.empty:
+        return pd.DataFrame(
+            columns=["Fichier", "Phonème", "CoG", "SD", "SKEW", "Kurtosis"]
+        )
     df.columns = ["Fichier", "Phonème", "CoG", "SD", "SKEW", "Kurtosis"]
     return df
 
@@ -208,6 +217,10 @@ def mesures_acoustiques_semivoyelles(path: Path) -> pd.DataFrame:
     and returns the relevant semivowel acoustic measures.
     """
     df = pd.read_csv(path, header=0, encoding="utf-16be")
+    if df.empty:
+        return pd.DataFrame(
+            columns=["Fichier", "Phonème", "Pente F1", "Pente F2", "Pente F3"]
+        )
     df = df[["fichier", "interval", "f1_slope", "f2_slope", "f3_slope"]]
     df.columns = ["Fichier", "Phonème", "Pente F1", "Pente F2", "Pente F3"]
     df[["Pente F1", "Pente F2", "Pente F3"]] = df[
