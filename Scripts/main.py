@@ -4,6 +4,7 @@ import unicodedata
 import zipfile
 from pathlib import Path
 
+from alice_texts import TEXT_OPTIONS
 import diverg_opt as diverg
 import mesures_acoustiques as mesures
 import pandas as pd
@@ -136,8 +137,8 @@ def zip_result_dir(result_dir: Path) -> bytes:
 
 st.title('"Le voyage d\'Alice" — Extraction de mesures acoustiques')
 
-st.image(PROJECT_ROOT / "logo_irit.png")
-st.image(PROJECT_ROOT / "SAMOVA.png")
+# st.image(PROJECT_ROOT / "logo_irit.png")
+# st.image(PROJECT_ROOT / "SAMOVA.png")
 
 
 audio_files = st.file_uploader(
@@ -159,6 +160,13 @@ speaker_gender = "M" if gender_selector == "Homme" else "F"
 transcription_checkbox = st.checkbox(
     "Transcrire le texte lu pour vérifier la lecture", disabled=controls_disabled
 )
+
+selected_text_label = st.radio(
+    "Sélectionnez la version du texte lu",
+    options=list(TEXT_OPTIONS),
+    disabled=controls_disabled,
+)
+selected_text = TEXT_OPTIONS[selected_text_label]
 
 
 # =====================================================
@@ -222,7 +230,7 @@ if st.session_state.analysis_started and audio_files:
         # All output paths scoped to this file's result dir
         processed_audio_path = PROJECT_ROOT / f"{output_stem}.wav"
         tg_output_path = PROJECT_ROOT / f"{output_stem}.TextGrid"
-        fichier_texte = PROJECT_ROOT / "texte_entier.txt"
+        fichier_texte = selected_text.path
         diverg_output_path = file_result_dir / "divergences.csv"
         spectral_debug_path = file_result_dir / "script_debug.txt"
         input_csv_path = (PROJECT_ROOT / "input_triangle_voc.csv").resolve()
@@ -230,8 +238,13 @@ if st.session_state.analysis_started and audio_files:
         formants_output_path = file_result_dir / "formants_glides.csv"
         mesure_vocale1_path = file_result_dir / "Measures_phrase1.txt"
         mesure_vocale2_path = file_result_dir / "Measures_phrase2.txt"
+        phrase2_img_path = file_result_dir / "pictures" / f"{output_stem}_phrase2.png"
         voweltriangle_path = file_result_dir / "voweltriangle.txt"
         transcript_path = file_result_dir / f"{output_stem}_transcript.txt"
+
+        if selected_text_label == "Texte court":
+            for stale_phrase2_path in (mesure_vocale2_path, phrase2_img_path):
+                stale_phrase2_path.unlink(missing_ok=True)
 
         set_progress(1, "Traitement de l'audio...")
         processed_audio = process_audio(audio_file_path)
@@ -273,19 +286,25 @@ if st.session_state.analysis_started and audio_files:
         diverg_df.to_csv(diverg_output_path, index=False)
 
         set_progress(5, "Extraction des moments spectraux...")
-        try:
-            spectral_moments.extract_moments(
-                consonnes, diverg_df, spectral_debug_path, processed_audio_path
+        if consonnes.empty:
+            mesures_cons_df = pd.DataFrame(
+                columns=["Fichier", "Phonème", "CoG", "SD", "SKEW", "Kurtosis"]
             )
-            mesures_cons_df = mesures.mesures_acoustiques_consonnes(
-                spectral_moments_output_path
-            )
-        except Exception:
-            st.error(
-                f"Erreur lors de l'extraction des moments spectraux dans **{sanitized_name}**, assurez vous que le texte lu correspond bien au texte standardisé."
-            )
-            spectral_moments_success = False
-            mesures_cons_df = None
+        else:
+            try:
+                spectral_moments.extract_moments(
+                    consonnes, diverg_df, spectral_debug_path, processed_audio_path
+                )
+                mesures_cons_df = mesures.mesures_acoustiques_consonnes(
+                    spectral_moments_output_path
+                )
+            except Exception:
+                if selected_text_label == "Texte entier":
+                    st.error(
+                        f"Erreur lors de l'extraction des moments spectraux dans **{sanitized_name}**, assurez vous que le texte lu correspond bien au texte standardisé."
+                    )
+                spectral_moments_success = False
+                mesures_cons_df = None
 
         with open(input_csv_path, "w") as f:
             f.write("Title;Speaker;File;Language;Log;Plotfile\n")
@@ -408,11 +427,14 @@ if st.session_state.analysis_started and audio_files:
 
         st.session_state.file_results[sanitized_name] = {
             "output_stem": output_stem,
+            "text_label": selected_text.label,
             "mesures_df": mesures_df,
             "mesures_cons_df": mesures_cons_df,
             "mesures_semivoyelles_df": mesures_semivoyelles_df,
             "phrase1_img": file_result_dir / "pictures" / f"{output_stem}_phrase1.png",
-            "phrase2_img": file_result_dir / "pictures" / f"{output_stem}_phrase2.png",
+            "phrase2_img": (
+                phrase2_img_path if selected_text_label != "Texte court" else None
+            ),
             "triangle_img": file_result_dir / "pictures" / f"{output_stem}_plot.png",
             "zip_data": zip_result_dir(file_result_dir),
             "diff": diff,
@@ -436,7 +458,7 @@ if st.session_state.file_results:
         result,
     ) in st.session_state.file_results.items():
         with st.expander(
-            f"Résultats pour {filename}",
+            f"Résultats pour {filename} ({result['text_label']})",
             expanded=True,
         ):
             if result["diff"] is not None:
@@ -482,14 +504,17 @@ if st.session_state.file_results:
 
             st.subheader("1) Mesures de qualité vocale")
             st.image(result["phrase1_img"])
-            st.image(result["phrase2_img"])
+            if result["phrase2_img"] is not None and result["phrase2_img"].exists():
+                st.image(result["phrase2_img"])
             st.subheader("2) Mesures vocaliques")
             st.write(result["mesures_df"].drop(columns=["Fichier"]))
             st.image(result["triangle_img"])
             st.subheader("3) Mesures consonantiques")
 
-            if result["mesures_cons_df"] is not None:
+            if result["mesures_cons_df"] is not None and not result["mesures_cons_df"].empty:
                 st.write(result["mesures_cons_df"].drop(columns=["Fichier"]))
+            else:
+                st.info("Aucune mesure consonantique disponible pour cette version du texte.")
 
             st.subheader("4) Mesures semi-consonantiques")
             st.write(result["mesures_semivoyelles_df"].drop(columns=["Fichier"]))

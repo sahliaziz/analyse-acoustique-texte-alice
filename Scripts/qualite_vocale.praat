@@ -35,7 +35,9 @@ for interval from 1 to numberOfIntervals
 	int$ = Get label of interval... tier interval
 	if int$ == "plage"
 		end_first_half_text = interval
-		beg_second_half_text = interval+1
+		if interval < numberOfIntervals
+			beg_second_half_text = interval+1
+		endif
 	endif
 endfor
 
@@ -329,6 +331,8 @@ endfor
 			endif
 		endfor
 
+		if sent_start2 > 0 and sent_end2 > sent_start2
+
 		Read from file: wavfile$
 		Extract part... sent_start2 sent_end2 rectangular 1.0 no
 		Rename... cs
@@ -576,6 +580,8 @@ endfor
 		select Sound cs
 		fileName_onlyvoiced2$ = fileName_raw$ + "_OnlyVoiced"
 		Save as WAV file: dir_onlyvoiced$ + fileName_onlyvoiced1$ + "_phrase2.wav"
+
+		endif
 
 	endif
 
