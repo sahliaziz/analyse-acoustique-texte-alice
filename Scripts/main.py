@@ -50,15 +50,14 @@ if "analysis_started" not in st.session_state:
 
 def forced_alignment_MAUS(audio_file: Path, text_file: Path) -> str | None:
     url = "https://clarin.phonetik.uni-muenchen.de/BASWebServices/services/runMAUSBasic"
-    files = {
-        "SIGNAL": open(audio_file, "rb"),
-        "TEXT": open(text_file, "rb"),
-    }
     data = {
         "LANGUAGE": "fra-FR",
         "OUTFORMAT": "TextGrid",
     }
-    response = requests.post(url, files=files, data=data)
+    with open(audio_file, "rb") as audio_handle, open(text_file, "rb") as text_handle:
+        files = {"SIGNAL": audio_handle, "TEXT": text_handle}
+        response = requests.post(url, files=files, data=data, timeout=120)
+
     if response.status_code != 200:
         print(f"Erreur lors de l'alignement forcé: {response.text}")
         return None
@@ -66,14 +65,21 @@ def forced_alignment_MAUS(audio_file: Path, text_file: Path) -> str | None:
         download_url = response.text.split("<downloadLink>")[1].split(
             "</downloadLink>"
         )[0]
-        textgrid_response = requests.get(download_url)
+        textgrid_response = requests.get(download_url, timeout=120)
         if textgrid_response.status_code == 200:
             return textgrid_response.text
-        else:
-            print(
-                f"Erreur lors du téléchargement du TextGrid: {textgrid_response.text}"
-            )
-            return None
+        print(f"Erreur lors du téléchargement du TextGrid: {textgrid_response.text}")
+        return None
+    return None
+
+
+def run_command(cmd: list[str | Path], error_message: str) -> None:
+    try:
+        subprocess.run([str(part) for part in cmd], check=True)
+    except FileNotFoundError as exc:
+        raise RuntimeError(f"{error_message}: commande introuvable ({cmd[0]})") from exc
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeError(f"{error_message}: code de sortie {exc.returncode}") from exc
 
 
 def forced_alignment_MFA(
@@ -91,7 +97,7 @@ def forced_alignment_MFA(
         "french_mfa",
         output_dir,
     ]
-    subprocess.run(cmd, check=True)
+    run_command(cmd, "Erreur lors de l'alignement forcé MFA")
 
 
 def sanitize_filename(name: str) -> str:
@@ -178,29 +184,30 @@ if st.session_state.analysis_started and audio_files:
     for audio_file in audio_files:
         spectral_moments_success = True
         mesures_cons_df: pd.DataFrame | None = None
+        diff: str | None = None
 
-        audio_file.name = sanitize_filename(audio_file.name)
+        sanitized_name = sanitize_filename(audio_file.name)
 
         # -------------------------------------
         # already processed
         # -------------------------------------
 
-        if audio_file.name in st.session_state.processed_files:
+        if sanitized_name in st.session_state.processed_files:
             continue
 
         progress_text = st.empty()
-        progress_text.markdown(f"**Traitement de {audio_file.name}**")
+        progress_text.markdown(f"**Traitement de {sanitized_name}**")
         progress_bar = st.progress(0)
 
         def set_progress(step: int, message: str) -> None:
-            progress_text.markdown(f"**Traitement de {audio_file.name}**\n\n{message}")
+            progress_text.markdown(f"**Traitement de {sanitized_name}**\n\n{message}")
             progress_bar.progress(int(step / total_steps * 100))
 
         # -------------------------------------
         # SAVE FILE
         # -------------------------------------
 
-        audio_file_path = PROJECT_ROOT / audio_file.name
+        audio_file_path = PROJECT_ROOT / sanitized_name
         with open(audio_file_path, "wb") as f:
             f.write(audio_file.getvalue())
 
@@ -239,7 +246,7 @@ if st.session_state.analysis_started and audio_files:
         consonnes = traitement_textgrid.extract_consonants(df_tg)
 
         set_progress(3, "Extraction des mesures acoustiques...")
-        subprocess.call(
+        run_command(
             [
                 "praat",
                 "--run",
@@ -247,7 +254,8 @@ if st.session_state.analysis_started and audio_files:
                 file_result_dir,
                 processed_audio_path,
                 tg_output_path,
-            ]
+            ],
+            f"Erreur lors de l'extraction des mesures vocales pour {sanitized_name}",
         )
 
         fe = AudioSegment.from_wav(processed_audio_path).frame_rate
@@ -274,7 +282,7 @@ if st.session_state.analysis_started and audio_files:
             )
         except Exception:
             st.error(
-                f"Erreur lors de l'extraction des moments spectraux dans **{audio_file.name}**, assurez vous que le texte lu correspond bien au texte standardisé."
+                f"Erreur lors de l'extraction des moments spectraux dans **{sanitized_name}**, assurez vous que le texte lu correspond bien au texte standardisé."
             )
             spectral_moments_success = False
             mesures_cons_df = None
@@ -285,12 +293,13 @@ if st.session_state.analysis_started and audio_files:
                 f"{output_stem};{speaker_gender};{processed_audio_path.name};FR;{voweltriangle_path.resolve()};{(file_result_dir / 'pictures' / (output_stem + '_plot.png')).resolve()}\n"
             )
         set_progress(6, "Création du triangle vocalique...")
-        subprocess.call(
-            ["praat", "--run", SCRIPT_DIR / "vowel_triangle.praat", input_csv_path]
+        run_command(
+            ["praat", "--run", SCRIPT_DIR / "vowel_triangle.praat", input_csv_path],
+            f"Erreur lors de la création du triangle vocalique pour {sanitized_name}",
         )
 
         set_progress(7, "Extraction des formants pour les glides...")
-        subprocess.call(
+        run_command(
             [
                 "praat",
                 "--run",
@@ -298,7 +307,8 @@ if st.session_state.analysis_started and audio_files:
                 processed_audio_path,
                 tg_output_path,
                 formants_output_path,
-            ]
+            ],
+            f"Erreur lors de l'extraction des formants pour {sanitized_name}",
         )
 
         set_progress(8, "Extraction des mesures vocales...")
@@ -331,7 +341,6 @@ if st.session_state.analysis_started and audio_files:
             from qwen_asr import Qwen3ASRModel
             import transcript
 
-
             set_progress(10, "Transcription du texte lu...")
 
             model = Qwen3ASRModel.from_pretrained(
@@ -361,7 +370,9 @@ if st.session_state.analysis_started and audio_files:
             transcript_df_tg = traitement_textgrid.tier_to_df(tg_output_path, 1)
             transcript_words_df = traitement_textgrid.tier_to_df(tg_output_path, 0)
 
-            diff = transcript.word_diff_html(ref_words_df, transcript_words_df, df_tg, transcript_df_tg)
+            diff = transcript.word_diff_html(
+                ref_words_df, transcript_words_df, df_tg, transcript_df_tg
+            )
 
         # -------------------------------------------------
         # SAVE GLOBAL DATA
@@ -395,7 +406,7 @@ if st.session_state.analysis_started and audio_files:
         # SAVE FILE RESULTS
         # -------------------------------------------------
 
-        st.session_state.file_results[audio_file.name] = {
+        st.session_state.file_results[sanitized_name] = {
             "output_stem": output_stem,
             "mesures_df": mesures_df,
             "mesures_cons_df": mesures_cons_df,
@@ -404,10 +415,10 @@ if st.session_state.analysis_started and audio_files:
             "phrase2_img": file_result_dir / "pictures" / f"{output_stem}_phrase2.png",
             "triangle_img": file_result_dir / "pictures" / f"{output_stem}_plot.png",
             "zip_data": zip_result_dir(file_result_dir),
-            "diff": diff if transcription_checkbox else None,
+            "diff": diff,
         }
 
-        st.session_state.processed_files.add(audio_file.name)
+        st.session_state.processed_files.add(sanitized_name)
 
         progress_text.empty()
         progress_bar.empty()
@@ -428,8 +439,9 @@ if st.session_state.file_results:
             f"Résultats pour {filename}",
             expanded=True,
         ):
-            if result['diff'] is not None:
-                st.markdown("""
+            if result["diff"] is not None:
+                st.markdown(
+                    """
                 <style>
                 .diff-container {
                     font-family: monospace;
@@ -462,29 +474,24 @@ if st.session_state.file_results:
                     padding: 2px 4px;
                 }
                 </style>
-                """, unsafe_allow_html=True)
+                """,
+                    unsafe_allow_html=True,
+                )
 
-                st.markdown(diff, unsafe_allow_html=True)
+                st.markdown(result["diff"], unsafe_allow_html=True)
 
             st.subheader("1) Mesures de qualité vocale")
-
             st.image(result["phrase1_img"])
-
             st.image(result["phrase2_img"])
-            
             st.subheader("2) Mesures vocaliques")
-
             st.write(result["mesures_df"].drop(columns=["Fichier"]))
-
             st.image(result["triangle_img"])
-
             st.subheader("3) Mesures consonantiques")
 
-            if result['mesures_cons_df'] is not None:
+            if result["mesures_cons_df"] is not None:
                 st.write(result["mesures_cons_df"].drop(columns=["Fichier"]))
 
             st.subheader("4) Mesures semi-consonantiques")
-
             st.write(result["mesures_semivoyelles_df"].drop(columns=["Fichier"]))
             st.download_button(
                 "Télécharger les résultats",
@@ -529,7 +536,9 @@ if not st.session_state.all_mesures_df.empty:
         elif category == "Mesures consonantiques":
             selection = st.selectbox(
                 "Sélectionnez une mesure à comparer",
-                options=all_mesures_cons_df.drop(columns=["Fichier", "Phonème"]).columns,
+                options=all_mesures_cons_df.drop(
+                    columns=["Fichier", "Phonème"]
+                ).columns,
             )
             if selection in all_mesures_cons_df.columns:
                 fig = px.bar(
@@ -539,5 +548,7 @@ if not st.session_state.all_mesures_df.empty:
                     color="Phonème",
                     barmode="group",
                 )
-                st.caption("Survolez le graphique pour afficher les options de téléchargement.")
+                st.caption(
+                    "Survolez le graphique et cliquez sur la caméra pour le télécharger."
+                )
                 st.plotly_chart(fig)
