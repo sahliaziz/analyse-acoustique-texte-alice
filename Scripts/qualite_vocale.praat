@@ -401,29 +401,6 @@ endfor
 		endwhile
 		select Sound onlyVoice
 
-		procedure checkZeros zeroCrossingRate
-
-			start = 0.0025
-			startZero = Get nearest zero crossing... 'start'
-			findStart = startZero
-			findStartZeroPlusOne = startZero + intermediateSamples
-			startZeroPlusOne = Get nearest zero crossing... 'findStartZeroPlusOne'
-			zeroCrossings = 0
-			strips = 0
-
-			while (findStart < 0.0275) and (findStart <> undefined)
-				while startZeroPlusOne = findStart
-					findStartZeroPlusOne = findStartZeroPlusOne + intermediateSamples
-					startZeroPlusOne = Get nearest zero crossing... 'findStartZeroPlusOne'
-				endwhile
-				afstand = startZeroPlusOne - startZero
-				strips = strips +1
-				zeroCrossings = zeroCrossings +1
-				findStart = startZeroPlusOne
-			endwhile
-			zeroCrossingRate = zeroCrossings/afstand
-		endproc
-
 	# --------------------------------------------------------------------------------------------
 	# PART 2:
 	# DETERMINATION OF THE THREE ACOUSTIC MEASURES.
