@@ -356,26 +356,12 @@ if st.session_state.analysis_started and audio_files:
         )
 
         if transcription_checkbox:
-            import torch
-            from qwen_asr import Qwen3ASRModel
-            import transcript
+            import transcription
 
             set_progress(10, "Transcription du texte lu...")
 
-            model = Qwen3ASRModel.from_pretrained(
-                pretrained_model_name_or_path="Qwen/Qwen3-ASR-0.6B",
-                dtype=torch.bfloat16,
-                device_map="cuda:0",
-                max_inference_batch_size=32,
-                max_new_tokens=512,
-            )
-
-            results = model.transcribe(
-                audio=str(processed_audio_path),
-                language="French",
-            )
-
-            transcript_text = results[0].text
+            model = transcription.load_model()
+            transcript_text = transcription.transcribe_audio(model, processed_audio_path)
 
             with open(transcript_path, "w") as f:
                 f.write(transcript_text)
@@ -389,7 +375,7 @@ if st.session_state.analysis_started and audio_files:
             transcript_df_tg = traitement_textgrid.tier_to_df(tg_output_path, 1)
             transcript_words_df = traitement_textgrid.tier_to_df(tg_output_path, 0)
 
-            diff = transcript.word_diff_html(
+            diff = transcription.word_diff_html(
                 ref_words_df, transcript_words_df, df_tg, transcript_df_tg
             )
 
@@ -445,6 +431,9 @@ if st.session_state.analysis_started and audio_files:
         progress_text.empty()
         progress_bar.empty()
 
+    st.session_state.analysis_started = False
+    st.rerun()
+
 
 # =====================================================
 # DISPLAY RESULTS
@@ -468,7 +457,7 @@ if st.session_state.file_results:
                 .diff-container {
                     font-family: monospace;
                     line-height: 2;
-                    font-size: 16px;
+                    font-size: 14px;
                 }
 
                 .diff-equal {
@@ -483,6 +472,7 @@ if st.session_state.file_results:
                 }
 
                 .diff-delete {
+                    text-decoration: line-through;
                     background-color: #ffebe9;
                     color: #cf222e;
                     border-radius: 4px;

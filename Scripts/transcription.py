@@ -1,7 +1,26 @@
 import html
 import difflib
-
+from pathlib import Path
 import pandas as pd
+import torch
+from qwen_asr import Qwen3ASRModel
+
+
+def load_model(model_name: str = "Qwen/Qwen3-ASR-0.6B") -> Qwen3ASRModel:
+    return Qwen3ASRModel.from_pretrained(
+        pretrained_model_name_or_path=model_name,
+        dtype=torch.bfloat16,
+        device_map="cuda:0" if torch.cuda.is_available() else "cpu",
+        max_inference_batch_size=32,
+        max_new_tokens=512,
+    )
+
+def transcribe_audio(model: Qwen3ASRModel, processed_audio_path: Path | str) -> str:
+    results = model.transcribe(
+        audio=str(processed_audio_path),
+        language="French",
+    )
+    return results[0].text
 
 
 def words_to_phones(words_df: pd.DataFrame, phones_df: pd.DataFrame) -> list[list[str]]:
