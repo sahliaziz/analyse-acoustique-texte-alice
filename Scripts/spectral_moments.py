@@ -106,15 +106,6 @@ def _build_praat_command(
     ]
 
 
-def _write_debug_windows(result_file_path: Path, windows: dict[str, float]) -> None:
-    with open(result_file_path, "a") as result_file:
-        for prefix, names in DEBUG_WINDOW_GROUPS:
-            values = "".join(
-                f"mom_win_{name} = {round(windows[name], 6):<20}" for name in names
-            )
-            result_file.writelines(f"{values}\n" if prefix != "p" else f"\n{values}\n")
-
-
 def extract_moments(
     fa_df: pd.DataFrame,
     diverg_df: pd.DataFrame,
@@ -3171,4 +3162,3 @@ def extract_moments(
             praat_result_dir,
         )
     )
-    _write_debug_windows(result_file_path, windows)
