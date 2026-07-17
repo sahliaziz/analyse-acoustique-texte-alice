@@ -23,3 +23,5 @@ wheels/
 Analyzed_results/
 Paty_alignment/
 Pitch_F0/
+temp/
+result/
