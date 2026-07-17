@@ -30,6 +30,8 @@ import pandas as pd
 from pydub import AudioSegment
 
 SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parent
+RESULT_DIR = PROJECT_ROOT / "result"
 PRAAT_SCRIPT = SCRIPT_DIR / "calculate_spectral_moments.praat"
 PLOSIVE_FRAME_SIZE = 0.005
 FRICATIVE_FRAME_SIZE = 0.01
@@ -79,10 +81,6 @@ DEBUG_WINDOW_GROUPS = (
 )
 
 
-def _praat_result_dir(path: Path) -> str:
-    return f"{path.resolve().as_posix().rstrip('/')}/"
-
-
 def _default_window(ruptures, segment_end: float, frame_size: float) -> float:
     return segment_end - frame_size if not ruptures else 0.0
 
@@ -106,18 +104,24 @@ def _build_praat_command(
     ]
 
 
+def _format_dir_for_praat(directory: Path | str) -> str:
+    """Return an absolute directory path with a trailing slash for Praat."""
+
+    return f"{Path(directory).resolve().as_posix().rstrip('/')}/"
+
+
 def extract_moments(
     fa_df: pd.DataFrame,
     diverg_df: pd.DataFrame,
-    resFile: str | Path,
     soundfile: Path,
+    praat_result_dir: Path | str | None = None,
 ) -> None:
     soundfile = Path(soundfile).resolve()
-    result_file_path = Path(resFile).resolve()
-    result_file_path.parent.mkdir(parents=True, exist_ok=True)
     praat_id = soundfile.stem
     praat_wav_dir = soundfile.parent
-    praat_result_dir = _praat_result_dir(result_file_path.parent)
+    praat_result_dir = _format_dir_for_praat(
+        praat_result_dir if praat_result_dir is not None else RESULT_DIR
+    )
 
     plos_p1 = fa_df.iloc[0]
     plos_p2 = fa_df.iloc[2]
@@ -2555,13 +2559,6 @@ def extract_moments(
     # if there is no rupture in the 20ms prior to the right border, take the nearest border at 20ms after the border
 
     if not b_rupt_end:
-        with open(resFile, "a") as result_file:
-            print(
-                "\nWARNING: There is no rupture 20ms prior or after the right border of the forced alignment segment for [b].\nTook end of consonant segment - window size ("
-                + str(frame_size_plos)
-                + "ms) as analysis window.",
-                file=result_file,
-            )
         mom_win_b = plos_b_end - frame_size_plos
     elif len(b_rupt_end_inf) == 1:
         mom_win_b = b_rupt_end_inf[-1]
@@ -2574,13 +2571,6 @@ def extract_moments(
         mom_win_b = b_rupt_end_sup[0]
 
     if not d_rupt_end:
-        with open(resFile, "w") as result_file:
-            print(
-                "\nWARNING: There is no rupture 20ms prior or after the right border of the forced alignment segment for [d].\nTook end of consonant segment - window size ("
-                + str(frame_size_plos)
-                + "ms) as analysis window.",
-                file=result_file,
-            )
         mom_win_d = plos_d_end - frame_size_plos
     elif len(d_rupt_end_inf) == 1:
         mom_win_d = d_rupt_end_inf[-1]
@@ -2593,13 +2583,6 @@ def extract_moments(
         mom_win_d = d_rupt_end_sup[0]
 
     if not g1_rupt_end:
-        with open(resFile, "a") as result_file:
-            print(
-                "\nWARNING: There is no rupture 20ms prior or after the right border of the forced alignment segment for [g1].\nTook end of consonant segment - window size ("
-                + str(frame_size_plos)
-                + "ms) as analysis window.",
-                file=result_file,
-            )
         mom_win_g1 = plos_g1_end - frame_size_plos
     elif len(g1_rupt_end_inf) == 1:
         mom_win_g1 = g1_rupt_end_inf[-1]
@@ -2612,13 +2595,6 @@ def extract_moments(
         mom_win_g1 = g1_rupt_end_sup[0]
 
     if not g2_rupt_end:
-        with open(resFile, "a") as result_file:
-            print(
-                "\nWARNING: There is no rupture 20ms prior or after the right border of the forced alignment segment for [g2].\nTook end of consonant segment - window size ("
-                + str(frame_size_plos)
-                + "ms) as analysis window.",
-                file=result_file,
-            )
         mom_win_g2 = plos_g2_end - frame_size_plos
     elif len(g2_rupt_end_inf) == 1:
         mom_win_g2 = g2_rupt_end_inf[-1]
@@ -2655,22 +2631,12 @@ def extract_moments(
             + ((float(fric_f[2]) - float(fric_f[0])) / 2)
             - frame_size_fric / 2
         )
-        with open(resFile, "a") as result_file:
-            print(
-                "\nWARNING: There are not at least two ruptures inside of the [f] segment.\nTook the midpoint of the segment as analysis window location",
-                file=result_file,
-            )
     elif len(f_rupt) == 2 and (float(f_rupt[1]) - float(f_rupt[0])) < frame_size_fric:
         mom_win_f = (
             float(fric_f[0])
             + ((float(fric_f[2]) - float(fric_f[0])) / 2)
             - frame_size_fric / 2
         )
-        with open(resFile, "a") as result_file:
-            print(
-                "\nWARNING: There are two ruptures inside of the [f] segment, but they are too close to be considered as separate ruptures (< frame size).\nTook the midpoint of the segment as analysis window location",
-                file=result_file,
-            )
     else:
         i = 0
         l = len(f_rupt)
@@ -2691,22 +2657,12 @@ def extract_moments(
             + ((float(fric_s[2]) - float(fric_s[0])) / 2)
             - frame_size_fric / 2
         )
-        with open(resFile, "a") as result_file:
-            print(
-                "\nWARNING: There are not at least two ruptures inside of the [s] segment.\nTook the midpoint of the segment as analysis window location",
-                file=result_file,
-            )
     elif len(s_rupt) == 2 and (float(s_rupt[1]) - float(s_rupt[0])) < frame_size_fric:
         mom_win_s = (
             float(fric_s[0])
             + ((float(fric_s[2]) - float(fric_s[0])) / 2)
             - frame_size_fric / 2
         )
-        with open(resFile, "a") as result_file:
-            print(
-                "\nWARNING: There are two ruptures inside of the [s] segment, but they are too close to be considered as separate ruptures (< frame size).\nTook the midpoint of the segment as analysis window location",
-                file=result_file,
-            )
     else:
         i = 0
         l = len(s_rupt)
@@ -2727,11 +2683,6 @@ def extract_moments(
             + ((float(fric_ch[2]) - float(fric_ch[0])) / 2)
             - frame_size_fric / 2
         )
-        with open(resFile, "a") as result_file:
-            print(
-                "\nWARNING: There are not at least two ruptures inside of the [ch] segment.\nTook the midpoint of the segment as analysis window location",
-                file=result_file,
-            )
     elif (
         len(ch_rupt) == 2 and (float(ch_rupt[1]) - float(ch_rupt[0])) < frame_size_fric
     ):
@@ -2740,11 +2691,6 @@ def extract_moments(
             + ((float(fric_ch[2]) - float(fric_ch[0])) / 2)
             - frame_size_fric / 2
         )
-        with open(resFile, "a") as result_file:
-            print(
-                "\nWARNING: There are two ruptures inside of the [ch] segment, but they are too close to be considered as separate ruptures (< frame size).\nTook the midpoint of the segment as analysis window location",
-                file=result_file,
-            )
     else:
         i = 0
         l = len(ch_rupt)
@@ -2765,11 +2711,6 @@ def extract_moments(
             + ((float(fric_v1.iloc[2]) - float(fric_v1.iloc[0])) / 2)
             - frame_size_fric / 2
         )
-        with open(resFile, "a") as result_file:
-            print(
-                "\nWARNING: There are not at least two ruptures inside of the [v1] segment.\nTook the midpoint of the segment as analysis window location",
-                file=result_file,
-            )
     elif (
         len(v1_rupt) == 2 and (float(v1_rupt[1]) - float(v1_rupt[0])) < frame_size_fric
     ):
@@ -2778,11 +2719,6 @@ def extract_moments(
             + ((float(fric_v1.iloc[2]) - float(fric_v1.iloc[0])) / 2)
             - frame_size_fric / 2
         )
-        with open(resFile, "a") as result_file:
-            print(
-                "\nWARNING: There are two ruptures inside of the [v1] segment, but they are too close to be considered as separate ruptures (< frame size).\nTook the midpoint of the segment as analysis window location",
-                file=result_file,
-            )
     elif (
         len(v1_rupt) == 2 and (float(v1_rupt[1]) - float(v1_rupt[0])) > frame_size_fric
     ):
@@ -2802,11 +2738,6 @@ def extract_moments(
                     v1_rupt[0] + ((v1_rupt[1] - v1_rupt[0]) / 2) - frame_size_fric / 2
                 )
         elif (float(v1_rupt[1]) - float(v1_rupt[0])) < 0.02:
-            with open(resFile, "a") as result_file:
-                print(
-                    "\nWARNING: The longest stable part inside of the [v1] segment is shorter than 20ms.",
-                    file=result_file,
-                )
             rupt_beg = v1_rupt[0] * samp_freq
             rupt_end = v1_rupt[1] * samp_freq
             mean_e_rupt = 0
@@ -2849,11 +2780,6 @@ def extract_moments(
             + ((float(fric_v2.iloc[2]) - float(fric_v2.iloc[0])) / 2)
             - frame_size_fric / 2
         )
-        with open(resFile, "a") as result_file:
-            print(
-                "\nWARNING: There are not at least two ruptures inside of the [v2] segment.\nTook the midpoint of the segment as analysis window location",
-                file=result_file,
-            )
     elif (
         len(v2_rupt) == 2 and (float(v2_rupt[1]) - float(v2_rupt[0])) < frame_size_fric
     ):
@@ -2862,11 +2788,6 @@ def extract_moments(
             + ((float(fric_v2[2]) - float(fric_v2[0])) / 2)
             - frame_size_fric / 2
         )
-        with open(resFile, "a") as result_file:
-            print(
-                "\nWARNING: There are two ruptures inside of the [v2] segment, but they are too close to be considered as separate ruptures (< frame size).\nTook the midpoint of the segment as analysis window location",
-                file=result_file,
-            )
 
     elif (
         len(v2_rupt) == 2 and (float(v2_rupt[1]) - float(v2_rupt[0])) > frame_size_fric
@@ -2887,11 +2808,6 @@ def extract_moments(
                     v2_rupt[0] + ((v2_rupt[1] - v2_rupt[0]) / 2) - frame_size_fric / 2
                 )
         elif (float(v2_rupt[1]) - float(v2_rupt[0])) < 0.02:
-            with open(resFile, "a") as result_file:
-                print(
-                    "\nWARNING: The longest stable part inside of the [v2] segment is shorter than 20ms.",
-                    file=result_file,
-                )
             rupt_beg = v2_rupt[0] * samp_freq
             rupt_end = v2_rupt[1] * samp_freq
             mean_e_rupt = 0
@@ -2934,11 +2850,6 @@ def extract_moments(
             + ((float(fric_z[2]) - float(fric_z[0])) / 2)
             - frame_size_fric / 2
         )
-        with open(resFile, "a") as result_file:
-            print(
-                "\nWARNING: There are not at least two ruptures inside of the [z] segment.\nTook the midpoint of the segment as analysis window location",
-                file=result_file,
-            )
 
     elif len(z_rupt) == 2 and (float(z_rupt[1]) - float(z_rupt[0])) < frame_size_fric:
         mom_win_z = (
@@ -2946,11 +2857,6 @@ def extract_moments(
             + ((float(fric_z[2]) - float(fric_z[0])) / 2)
             - frame_size_fric / 2
         )
-        with open(resFile, "a") as result_file:
-            print(
-                "\nWARNING: There are two ruptures inside of the [z] segment, but they are too close to be considered as separate ruptures (< frame size).\nTook the midpoint of the segment as analysis window location",
-                file=result_file,
-            )
 
     elif len(z_rupt) == 2 and (float(z_rupt[1]) - float(z_rupt[0])) > frame_size_fric:
         min_e_seg = sys.maxsize
@@ -2969,11 +2875,6 @@ def extract_moments(
                     z_rupt[0] + ((z_rupt[1] - z_rupt[0]) / 2) - frame_size_fric / 2
                 )
         elif (float(z_rupt[1]) - float(z_rupt[0])) < 0.02:
-            with open(resFile, "a") as result_file:
-                print(
-                    "\nWARNING: The longest stable part inside of the [z] segment is shorter than 20ms.",
-                    file=result_file,
-                )
             rupt_beg = z_rupt[0] * samp_freq
             rupt_end = z_rupt[1] * samp_freq
             mean_e_rupt = 0
@@ -3016,22 +2917,12 @@ def extract_moments(
             + ((float(fric_j[2]) - float(fric_j[0])) / 2)
             - frame_size_fric / 2
         )
-        with open(resFile, "a") as result_file:
-            print(
-                "\nWARNING: There are not at least two ruptures inside of the [j] segment.\nTook the midpoint of the segment as analysis window location",
-                file=result_file,
-            )
     elif len(j_rupt) == 2 and (float(j_rupt[1]) - float(j_rupt[0])) < frame_size_fric:
         mom_win_j = (
             float(fric_j[0])
             + ((float(fric_j[2]) - float(fric_j[0])) / 2)
             - frame_size_fric / 2
         )
-        with open(resFile, "a") as result_file:
-            print(
-                "\nWARNING: There are two ruptures inside of the [j] segment, but they are too close to be considered as separate ruptures (< frame size).\nTook the midpoint of the segment as analysis window location",
-                file=result_file,
-            )
 
     elif len(j_rupt) == 2 and (float(j_rupt[1]) - float(j_rupt[0])) > frame_size_fric:
         min_e_seg = sys.maxsize
@@ -3050,11 +2941,6 @@ def extract_moments(
                     j_rupt[0] + ((j_rupt[1] - j_rupt[0]) / 2) - frame_size_fric / 2
                 )
         elif (float(j_rupt[1]) - float(j_rupt[0])) < 0.02:
-            with open(resFile, "a") as result_file:
-                print(
-                    "\nWARNING: The longest stable part inside of the [j] segment is shorter than 20ms.",
-                    file=result_file,
-                )
             rupt_beg = j_rupt[0] * samp_freq
             rupt_end = j_rupt[1] * samp_freq
             mean_e_rupt = 0

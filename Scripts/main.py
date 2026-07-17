@@ -16,9 +16,11 @@ import traitement_textgrid
 from pydub import AudioSegment
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = SCRIPT_DIR.parent.parent
+PROJECT_ROOT = SCRIPT_DIR.parent
 RESULT_DIR = PROJECT_ROOT / "result"
+TEMP_DIR = PROJECT_ROOT / "temp"
 RESULT_DIR.mkdir(exist_ok=True)
+TEMP_DIR.mkdir(exist_ok=True)
 
 
 # =====================================================
@@ -215,7 +217,7 @@ if st.session_state.analysis_started and audio_files:
         # SAVE FILE
         # -------------------------------------
 
-        audio_file_path = PROJECT_ROOT / sanitized_name
+        audio_file_path = TEMP_DIR / sanitized_name
         with open(audio_file_path, "wb") as f:
             f.write(audio_file.getvalue())
 
@@ -228,12 +230,12 @@ if st.session_state.analysis_started and audio_files:
         (file_result_dir / "only_voiced").mkdir(exist_ok=True)
 
         # All output paths scoped to this file's result dir
-        processed_audio_path = PROJECT_ROOT / f"{output_stem}.wav"
-        tg_output_path = PROJECT_ROOT / f"{output_stem}.TextGrid"
+        processed_audio_path = TEMP_DIR / f"{output_stem}.wav"
+        tg_output_path = TEMP_DIR / f"{output_stem}.TextGrid"
         fichier_texte = selected_text.path
         diverg_output_path = file_result_dir / "divergences.csv"
         spectral_debug_path = file_result_dir / "script_debug.txt"
-        input_csv_path = (PROJECT_ROOT / "input_triangle_voc.csv").resolve()
+        input_csv_path = (TEMP_DIR / "input_triangle_voc.csv").resolve()
         spectral_moments_output_path = file_result_dir / "spectralmoments.csv"
         formants_output_path = file_result_dir / "formants_glides.csv"
         mesure_vocale1_path = file_result_dir / "Measures_phrase1.txt"
@@ -251,7 +253,7 @@ if st.session_state.analysis_started and audio_files:
         processed_audio.export(processed_audio_path, format="wav")
 
         set_progress(2, "Alignement forcé...")
-        forced_alignment_MFA(processed_audio_path, fichier_texte, "alice", PROJECT_ROOT)
+        forced_alignment_MFA(processed_audio_path, fichier_texte, "alice", TEMP_DIR)
 
         textgrid_content = tg_output_path.read_text()
         df_tg = traitement_textgrid.tier_to_df(tg_output_path, 1)
@@ -293,7 +295,10 @@ if st.session_state.analysis_started and audio_files:
         else:
             try:
                 spectral_moments.extract_moments(
-                    consonnes, diverg_df, spectral_debug_path, processed_audio_path
+                    consonnes,
+                    diverg_df,
+                    processed_audio_path,
+                    file_result_dir,
                 )
                 mesures_cons_df = mesures.mesures_acoustiques_consonnes(
                     spectral_moments_output_path
@@ -368,7 +373,7 @@ if st.session_state.analysis_started and audio_files:
 
             set_progress(11, "Alignement forcé...")
             forced_alignment_MFA(
-                processed_audio_path, transcript_path, "alice", PROJECT_ROOT
+                processed_audio_path, transcript_path, "alice", TEMP_DIR
             )
 
             textgrid_content = tg_output_path.read_text()

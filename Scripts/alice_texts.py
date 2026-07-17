@@ -3,7 +3,9 @@ from pathlib import Path
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = SCRIPT_DIR.parent.parent
+PROJECT_ROOT = SCRIPT_DIR.parent
+TEMP_DIR = PROJECT_ROOT / "temp"
+TEMP_DIR.mkdir(exist_ok=True)
 
 
 @dataclass(frozen=True)
