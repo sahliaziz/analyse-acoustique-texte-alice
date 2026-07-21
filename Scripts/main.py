@@ -1,4 +1,5 @@
 import io
+import secrets
 import subprocess
 import unicodedata
 import zipfile
@@ -217,25 +218,28 @@ if st.session_state.analysis_started and audio_files:
         # SAVE FILE
         # -------------------------------------
 
-        audio_file_path = TEMP_DIR / sanitized_name
+        output_stem = Path(sanitized_name).stem
+        run_hex = secrets.token_hex(8)
+        file_temp_dir = TEMP_DIR / f"{output_stem}_{run_hex}"
+        file_temp_dir.mkdir()
+
+        audio_file_path = file_temp_dir / sanitized_name
         with open(audio_file_path, "wb") as f:
             f.write(audio_file.getvalue())
 
-        output_stem = audio_file_path.stem
-
         # Per-file result directories
-        file_result_dir = RESULT_DIR / output_stem
-        file_result_dir.mkdir(exist_ok=True)
+        file_result_dir = RESULT_DIR / f"{output_stem}_{run_hex}"
+        file_result_dir.mkdir()
         (file_result_dir / "pictures").mkdir(exist_ok=True)
         (file_result_dir / "only_voiced").mkdir(exist_ok=True)
 
         # All output paths scoped to this file's result dir
-        processed_audio_path = TEMP_DIR / f"{output_stem}.wav"
-        tg_output_path = TEMP_DIR / f"{output_stem}.TextGrid"
+        processed_audio_path = file_temp_dir / f"{output_stem}.wav"
+        tg_output_path = file_temp_dir / f"{output_stem}.TextGrid"
         fichier_texte = selected_text.path
         diverg_output_path = file_result_dir / "divergences.csv"
         spectral_debug_path = file_result_dir / "script_debug.txt"
-        input_csv_path = (TEMP_DIR / "input_triangle_voc.csv").resolve()
+        input_csv_path = (file_temp_dir / "input_triangle_voc.csv").resolve()
         spectral_moments_output_path = file_result_dir / "spectralmoments.csv"
         formants_output_path = file_result_dir / "formants_glides.csv"
         mesure_vocale1_path = file_result_dir / "Measures_phrase1.txt"
@@ -253,7 +257,7 @@ if st.session_state.analysis_started and audio_files:
         processed_audio.export(processed_audio_path, format="wav")
 
         set_progress(2, "Alignement forcé...")
-        forced_alignment_MFA(processed_audio_path, fichier_texte, "alice", TEMP_DIR)
+        forced_alignment_MFA(processed_audio_path, fichier_texte, "alice", file_temp_dir)
 
         textgrid_content = tg_output_path.read_text()
         df_tg = traitement_textgrid.tier_to_df(tg_output_path, 1)
@@ -373,7 +377,7 @@ if st.session_state.analysis_started and audio_files:
 
             set_progress(11, "Alignement forcé...")
             forced_alignment_MFA(
-                processed_audio_path, transcript_path, "alice", TEMP_DIR
+                processed_audio_path, transcript_path, "alice", file_temp_dir
             )
 
             textgrid_content = tg_output_path.read_text()
@@ -496,6 +500,17 @@ if st.session_state.file_results:
                 )
 
                 st.markdown(result["diff"], unsafe_allow_html=True)
+                st.markdown(
+                    "<small>"
+                    '<span style="background-color:#fff8c5; padding:2px 4px; '
+                    'border-radius:3px;">jaune = substitution ou ajout</span><br>'
+                    '<span style="background-color:#ffebe9; color:#cf222e; '
+                    'padding:2px 4px; border-radius:3px;">rouge = suppression</span><br>'
+                    '<span style="background-color:#f0f0f0;'
+                    'padding:2px 4px; border-radius:3px;">texte non surligné = identique</span>'
+                    "</small>",
+                    unsafe_allow_html=True,
+                )
 
             st.subheader("1) Mesures de qualité vocale")
             st.image(result["phrase1_img"])
