@@ -58,7 +58,7 @@ streamlit run Scripts/streamlit_app.py
 
 L'interface permet de téléverser un ou plusieurs fichiers `.wav`, de choisir le genre du locuteur et la version du texte, puis de lancer l'extraction des mesures acoustiques.
 
-Il faut compter environ 5 minutes par audio. Une fois que ceux-ci sont traités, les résultats se trouveront dans le dossier "result" sous la forme de trois tableurs correspondant respectivement aux mesures acoustiques générales, aux mesures acoustiques liées aux consonnes et aux mesures acoustiques liées aux semi-voyelles.
+Il faut compter environ 2 minutes par audio. Une fois que ceux-ci sont traités, les résultats se trouveront dans le dossier "result" sous la forme de trois tableurs correspondant respectivement aux mesures acoustiques générales, aux mesures acoustiques liées aux consonnes et aux mesures acoustiques liées aux semi-voyelles.
 
 ## Fonctionnement
 
