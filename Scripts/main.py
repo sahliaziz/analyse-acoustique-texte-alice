@@ -219,7 +219,7 @@ if st.session_state.analysis_started and audio_files:
         # -------------------------------------
 
         output_stem = Path(sanitized_name).stem
-        run_hex = secrets.token_hex(8)
+        run_hex = secrets.token_hex(6)
         file_temp_dir = TEMP_DIR / f"{output_stem}_{run_hex}"
         file_temp_dir.mkdir()
 
@@ -493,6 +493,10 @@ if st.session_state.file_results:
                     color: #24292f;
                     border-radius: 4px;
                     padding: 2px 4px;
+                }
+
+                .diff-replace-ref {
+                    text-decoration: line-through;
                 }
                 </style>
                 """,

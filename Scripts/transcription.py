@@ -6,7 +6,7 @@ import torch
 from qwen_asr import Qwen3ASRModel
 
 
-def load_model(model_name: str = "Qwen/Qwen3-ASR-0.6B") -> Qwen3ASRModel:
+def load_model(model_name: str = "Qwen/Qwen3-ASR-1.7B") -> Qwen3ASRModel:
     return Qwen3ASRModel.from_pretrained(
         pretrained_model_name_or_path=model_name,
         dtype=torch.bfloat16,
