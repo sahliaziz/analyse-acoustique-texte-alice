@@ -139,6 +139,7 @@ def zip_result_dir(result_dir: Path) -> bytes:
 # =====================================================
 
 st.title('"Le voyage d\'Alice" — Extraction de mesures acoustiques')
+st.set_page_config(page_title="Le voyage d\'Alice - Extraction de mesures acoustiques", page_icon="🎤")
 
 # st.image(PROJECT_ROOT / "logo_irit.png")
 # st.image(PROJECT_ROOT / "SAMOVA.png")
@@ -385,7 +386,10 @@ if st.session_state.analysis_started and audio_files:
             transcript_words_df = traitement_textgrid.tier_to_df(tg_output_path, 0)
 
             diff = transcription.word_diff_html(
-                ref_words_df, transcript_words_df, df_tg, transcript_df_tg
+                ref_words_df,
+                transcript_words_df,
+                df_tg,
+                transcript_df_tg
             )
 
         # -------------------------------------------------
@@ -474,8 +478,8 @@ if st.session_state.file_results:
                 }
 
                 .diff-insert {
-                    background-color: #fff8c5;
-                    color: #24292f;
+                    background-color: #dcfce7;
+                    color: #166534;
                     border-radius: 4px;
                     padding: 2px 4px;
                 }
@@ -503,11 +507,16 @@ if st.session_state.file_results:
                     unsafe_allow_html=True,
                 )
 
-                st.markdown(result["diff"], unsafe_allow_html=True)
+                st.markdown(
+                    result["diff"].replace("&lt;unk&gt;", "[...]"),
+                    unsafe_allow_html=True,
+                )
                 st.markdown(
                     "<small>"
+                    '<span style="background-color:#dcfce7; color:#166534; padding:2px 4px; '
+                    'border-radius:3px;">vert = ajout</span><br>'
                     '<span style="background-color:#fff8c5; padding:2px 4px; '
-                    'border-radius:3px;">jaune = substitution ou ajout</span><br>'
+                    'border-radius:3px;">jaune = substitution (référence -> transcription)</span><br>'
                     '<span style="background-color:#ffebe9; color:#cf222e; '
                     'padding:2px 4px; border-radius:3px;">rouge = suppression</span><br>'
                     '<span style="background-color:#f0f0f0;'

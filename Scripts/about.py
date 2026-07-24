@@ -1,6 +1,10 @@
 import streamlit as st
 
+st.set_page_config(page_title="Le voyage d\'Alice - A propos", page_icon="ℹ️")
+
 st.markdown("""
+
+    ## A propos du pipeline d'analyse vocale
             
     **"Le voyage d'Alice"** est un texte standardisé créé pour l'évaluation de la parole et de la voix en français.
     Il permet d'analyser :
