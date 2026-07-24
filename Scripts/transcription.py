@@ -40,7 +40,7 @@ def word_diff_html(
     word_ref_df: pd.DataFrame,
     word_hyp_df: pd.DataFrame,
     phone_ref_df: pd.DataFrame,
-    phone_hyp_df: pd.DataFrame,
+    phone_hyp_df: pd.DataFrame
 ) -> str:
     word_ref_df = word_ref_df[word_ref_df["text"] != "<eps>"].reset_index(drop=True)
     word_hyp_df = word_hyp_df[word_hyp_df["text"] != "<eps>"].reset_index(drop=True)
@@ -81,7 +81,7 @@ def word_diff_html(
             else:
                 chunks.append(
                     f'<span class="diff-replace">'
-                    f"{html.escape(' '.join(ref_seg))} -> "
+                    f"<span class=\"diff-replace-ref\">{html.escape(' '.join(ref_seg))}</span> -> "
                     f"{html.escape(' '.join(query_seg))}"
                     f"</span>"
                 )
